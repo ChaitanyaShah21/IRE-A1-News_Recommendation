@@ -11,9 +11,10 @@ contract written, plain-language walkthrough of the whole assignment delivered a
 recall-checked (see `LEARNING.md`, `GLOSSARY.md`), Codabench registrations done.
 
 **Phase 1 — Q1 reproducible data pipeline.** In progress. Unified-schema concept taught,
-schema-design decision made (D3 in `ARCHITECTURE.md`: 3 tables — articles, impressions,
-history — no separate users table), concrete columns defined. Next: download the raw
-MIND-small and EB-NeRD-demo files (Q1.1) before writing any ingestion code.
+schema-design decision made (D3), concrete columns defined, raw data downloaded and
+verified, dev environment (`.venv` + `requirements.txt`, D4) set up. Next: write the
+ingestion code (`src/newsrec/ingest_mind.py`, `src/newsrec/ingest_ebnerd.py`) that reads
+the raw files and produces the three unified-schema tables — Q1.2.
 
 ---
 
