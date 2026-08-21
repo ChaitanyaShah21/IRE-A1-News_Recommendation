@@ -6,9 +6,10 @@
 
 ## Where we are right now
 
-**Phase 0 — Orientation & Scaffolding.** In progress.
-Repository scaffolded, operating contract written. Next: the plain-language walkthrough
-of what this assignment actually asks for.
+**Phase 0 — Orientation & Scaffolding.** Nearly done.
+Repository scaffolded, operating contract written, plain-language walkthrough of the
+whole assignment delivered and recall-checked (see `LEARNING.md`, `GLOSSARY.md`). Next:
+unblock the three manual actions below, then start Phase 1 (Q1 pipeline).
 
 ---
 
@@ -42,6 +43,10 @@ in Phase 4 beyond what Q9 requires.
 - [x] Working mode packaged as a reusable skill at `~/.claude/skills/assignment/`,
       so future assignments in other folders start with the same contract, templates,
       intake interview and phase playbook. Invoke with `/assignment`.
+- [x] Plain-language walkthrough of the full assignment (analogy → Q1–Q9 mapping),
+      required reading logged in `LEARNING.md`, new vocabulary logged in `GLOSSARY.md`.
+      Recall quiz run: temporal-split reasoning and the BM25-vs-embeddings distinction
+      needed re-teaching before moving on — corrected points logged in `LEARNING.md`.
 
 ---
 
