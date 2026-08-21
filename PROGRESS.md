@@ -83,17 +83,22 @@ Chaitanya's two manual actions (below) unblock the critical path.
 
 Repo URL: _not yet provided_
 
+- [ ] **Grant HuggingFace access to `yjw1029/MIND`** — it's a gated dataset repo
+      (HTTP 401 `GatedRepo` on anonymous download, confirmed 2026-08-21). Create a HF
+      account if needed, visit https://huggingface.co/datasets/yjw1029/MIND, request
+      access (usually instant), generate a read-only access token (Settings → Access
+      Tokens), and share it (or log in via `hf auth login`) so MIND-small can be
+      downloaded. EB-NeRD-demo has no such gate and is not blocked by this.
+
 ---
 
 ## Where the data lives
 
-Nothing downloaded yet. Local machine has no dataset files as of 2026-08-21.
-
 | Dataset | Bundle | Path | Status |
 |---|---|---|---|
-| MIND | small (train + dev) | `data/raw/mind/` | ⬜ not downloaded |
+| MIND | small (train + dev) | `data/raw/mind/` | ⬜ blocked — see manual actions above |
 | MIND | large test | `data/raw/mind/` | ⬜ not downloaded |
-| EB-NeRD | demo | `data/raw/ebnerd/` | ⬜ not downloaded |
+| EB-NeRD | demo | `data/raw/ebnerd/ebnerd_demo.zip` | 🔄 downloading, 2026-08-21 |
 | EB-NeRD | small | `data/raw/ebnerd/` | ⬜ not downloaded |
 | EB-NeRD | large + testset | cloud only (too big for 7 GB RAM local) | ⬜ not downloaded |
 
@@ -111,7 +116,6 @@ Nothing downloaded yet. Local machine has no dataset files as of 2026-08-21.
 Every error hit, its root cause, and the fix chosen. Consult before debugging anything —
 we may have already solved it.
 
-_(empty so far)_
-
 | Date | Error | Root cause | Fix chosen | Trade-off accepted |
 |---|---|---|---|---|
+| 2026-08-21 | `wget`/anonymous download of MIND from `huggingface.co/datasets/yjw1029/MIND` returns HTTP 401, `x-error-code: GatedRepo` | The HF mirror is a gated repo — requires a logged-in, access-granted HuggingFace account, not just a public URL. Likely there to gate MIND's original license terms. | Chaitanya creates a free HF account, requests access (usually instant), generates a read-only access token; download resumes once shared. EB-NeRD-demo is unaffected (open S3 bucket, no gate). | Adds a manual step outside the pipeline's control before MIND ingestion can start; considered going to the official MIND site instead but that's gated the same way, so no trade-off actually avoided. |
