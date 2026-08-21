@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git init *)",
+      "Bash(mkdir -p configs src/newsrec/retrieval src/newsrec/eval scripts tests notebooks reports data/raw data/processed)",
+      "Bash(git branch *)"
+    ]
+  }
+}
