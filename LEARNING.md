@@ -27,3 +27,24 @@ since nothing broke; corrected via re-explanation, not code. Points to remember:
 - BM25 and embeddings differ in *matching mechanism* (literal words vs. meaning), not in
   speed or in one being objectively better — which one wins is the empirical question
   Q3.5 asks us to answer, likely differently per slice.
+
+---
+
+## Phase 1 — Unified schema
+
+Required reading for this concept was done directly against ground truth rather than
+external sources: both provided notebooks (`notebooks/00_provided_*.ipynb`) were read in
+full to confirm actual column names, types, row counts, and null rates before teaching
+the schema-unification concept.
+
+**Recall check:** three questions on splitting MIND's `impressions` string, why
+duplicated per-dataset logic is a problem, and which dataset needs reshaping for a
+per-user history table. All three answered correctly; Q2's answer needed a concrete bug
+scenario added (a tokenizer fix applied to one duplicated pipeline but not the other,
+silently corrupting the Q3.5 cross-dataset comparison) — logged here, not re-taught from
+scratch. Confirmed structural facts to remember:
+- MIND TSVs have no header row — column names are supplied by code, not the file.
+- EB-NeRD Parquet is self-describing and lazily scannable, which is how the 12M+ row
+  behaviors files get explored without exhausting RAM.
+- The unified schema is a **superset**: dataset-unique columns (sentiment, body text,
+  entity embeddings) stay in, null for the dataset that lacks them — nothing is dropped.

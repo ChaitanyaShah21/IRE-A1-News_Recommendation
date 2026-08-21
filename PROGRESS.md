@@ -10,8 +10,11 @@
 contract written, plain-language walkthrough of the whole assignment delivered and
 recall-checked (see `LEARNING.md`, `GLOSSARY.md`), Codabench registrations done.
 
-**Phase 1 — Q1 reproducible data pipeline.** Starting now. First step: teach what a
-"unified schema" means for MIND vs. EB-NeRD before downloading anything.
+**Phase 1 — Q1 reproducible data pipeline.** In progress. Unified-schema concept taught
+and recall-checked against real column names confirmed in both provided notebooks (see
+`GLOSSARY.md`, `LEARNING.md`). Next: present the concrete schema-design options
+(table layout, column names/types) as a decision point — R6, Chaitanya chooses — before
+any ingestion code is written.
 
 ---
 
@@ -51,6 +54,13 @@ in Phase 4 beyond what Q9 requires.
       needed re-teaching before moving on — corrected points logged in `LEARNING.md`.
 
 ---
+
+### Phase 1
+- [x] Read both provided notebooks in full (`00_provided_mind_analysis.ipynb`,
+      `00_provided_ebnerd_analysis.ipynb`) to confirm actual schemas, row counts, null
+      rates — ground truth for everything below, not summary-of-a-summary
+- [x] Taught "unified schema" concept (analogy → technical → recall check, 3/3 correct
+      with one gap filled). Logged in `GLOSSARY.md`, `LEARNING.md`.
 
 ## Next step
 
