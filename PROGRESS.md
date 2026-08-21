@@ -39,6 +39,9 @@ in Phase 4 beyond what Q9 requires.
 - [x] Directory scaffold (`src/newsrec/`, `scripts/`, `tests/`, `configs/`, `notebooks/`, `reports/`, `data/`)
 - [x] `CLAUDE.md` + `PROMPT.md` — the operating contract
 - [x] Living documents created
+- [x] Working mode packaged as a reusable skill at `~/.claude/skills/assignment/`,
+      so future assignments in other folders start with the same contract, templates,
+      intake interview and phase playbook. Invoke with `/assignment`.
 
 ---
 
