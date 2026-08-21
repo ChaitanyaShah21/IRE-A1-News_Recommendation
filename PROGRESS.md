@@ -10,11 +10,10 @@
 contract written, plain-language walkthrough of the whole assignment delivered and
 recall-checked (see `LEARNING.md`, `GLOSSARY.md`), Codabench registrations done.
 
-**Phase 1 — Q1 reproducible data pipeline.** In progress. Unified-schema concept taught
-and recall-checked against real column names confirmed in both provided notebooks (see
-`GLOSSARY.md`, `LEARNING.md`). Next: present the concrete schema-design options
-(table layout, column names/types) as a decision point — R6, Chaitanya chooses — before
-any ingestion code is written.
+**Phase 1 — Q1 reproducible data pipeline.** In progress. Unified-schema concept taught,
+schema-design decision made (D3 in `ARCHITECTURE.md`: 3 tables — articles, impressions,
+history — no separate users table), concrete columns defined. Next: download the raw
+MIND-small and EB-NeRD-demo files (Q1.1) before writing any ingestion code.
 
 ---
 
@@ -61,6 +60,9 @@ in Phase 4 beyond what Q9 requires.
       rates — ground truth for everything below, not summary-of-a-summary
 - [x] Taught "unified schema" concept (analogy → technical → recall check, 3/3 correct
       with one gap filled). Logged in `GLOSSARY.md`, `LEARNING.md`.
+- [x] Schema-design decision (D3): 3 tables (articles, impressions, history), Chaitanya
+      chose over a 4-table (+users) and a 2-table (inline history) alternative. Concrete
+      columns defined in `ARCHITECTURE.md`.
 
 ## Next step
 
