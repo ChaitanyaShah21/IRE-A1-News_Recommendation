@@ -4,7 +4,9 @@ Required by assignment Q7.4: all prompts, chat history, and marking of AI-genera
 versus human-written code.
 
 ## Tool used
-Claude Code (Anthropic), model Opus 5, operating under the contract in `CLAUDE.md`.
+Claude Code (Anthropic), operating under the contract in `CLAUDE.md`. Model varies by
+session (Opus 5 for Phase 0 scaffolding, Sonnet 5 from the Phase 1 session onward per
+Chaitanya's `/model` choice) — noted per-commit in git history, not tracked here.
 
 ## Authorship marking
 
@@ -15,8 +17,11 @@ Claude Code (Anthropic), model Opus 5, operating under the contract in `CLAUDE.m
 | `ARCHITECTURE.md` | AI-generated, human-decided | All decisions chosen by Chaitanya |
 | `PROGRESS.md` | AI-maintained | |
 | `GLOSSARY.md` | AI-generated | |
+| `LEARNING.md` | AI-generated | Reading list + recall-check outcomes |
 | `.gitignore` | AI-generated | |
+| `requirements.txt` | AI-generated, human-decided | Chaitanya chose venv+requirements.txt over Poetry/conda (D4) |
 | `notebooks/00_provided_*.ipynb` | **Supplied with the assignment** | Not our work; reference only |
+| `data/raw/**` | Not authored — downloaded datasets | Gitignored, never committed |
 
 _Appended as files are created._
 

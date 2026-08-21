@@ -83,12 +83,8 @@ Chaitanya's two manual actions (below) unblock the critical path.
 
 Repo URL: _not yet provided_
 
-- [ ] **Grant HuggingFace access to `yjw1029/MIND`** — it's a gated dataset repo
-      (HTTP 401 `GatedRepo` on anonymous download, confirmed 2026-08-21). Create a HF
-      account if needed, visit https://huggingface.co/datasets/yjw1029/MIND, request
-      access (usually instant), generate a read-only access token (Settings → Access
-      Tokens), and share it (or log in via `hf auth login`) so MIND-small can be
-      downloaded. EB-NeRD-demo has no such gate and is not blocked by this.
+- [x] **Grant HuggingFace access to `yjw1029/MIND`** — done 2026-08-21, MINDsmall_train.zip
+      and MINDsmall_dev.zip downloaded successfully by Chaitanya.
 
 ---
 
@@ -96,11 +92,15 @@ Repo URL: _not yet provided_
 
 | Dataset | Bundle | Path | Status |
 |---|---|---|---|
-| MIND | small (train + dev) | `data/raw/mind/` | ⬜ blocked — see manual actions above |
-| MIND | large test | `data/raw/mind/` | ⬜ not downloaded |
-| EB-NeRD | demo | `data/raw/ebnerd/ebnerd_demo.zip` | 🔄 downloading, 2026-08-21 |
+| MIND | small (train + dev) | `data/raw/mind/MINDsmall_{train,dev}/` | ✅ downloaded, row counts verified against provided notebook (51,282 / 156,965 train; 42,416 / 73,152 dev) |
+| MIND | large test | `data/raw/mind/` | ⬜ not downloaded (needed only for Codabench submission, Phase 5) |
+| EB-NeRD | demo | `data/raw/ebnerd/ebnerd_demo/` | ✅ downloaded, valid parquet confirmed (11,777 articles, 24,724 train behaviors, 1,590 train history rows — a different, smaller bundle than the "large" one the provided notebook explored, so these counts are expected to differ) |
 | EB-NeRD | small | `data/raw/ebnerd/` | ⬜ not downloaded |
 | EB-NeRD | large + testset | cloud only (too big for 7 GB RAM local) | ⬜ not downloaded |
+
+**Environment:** `.venv/` created (Python 3.12.3, standard `venv`), dependencies pinned
+in `requirements.txt` (`polars==1.43.2`, `pyarrow==25.0.1` — see D4 in `ARCHITECTURE.md`).
+Rebuild with `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt`.
 
 ---
 
@@ -118,4 +118,5 @@ we may have already solved it.
 
 | Date | Error | Root cause | Fix chosen | Trade-off accepted |
 |---|---|---|---|---|
-| 2026-08-21 | `wget`/anonymous download of MIND from `huggingface.co/datasets/yjw1029/MIND` returns HTTP 401, `x-error-code: GatedRepo` | The HF mirror is a gated repo — requires a logged-in, access-granted HuggingFace account, not just a public URL. Likely there to gate MIND's original license terms. | Chaitanya creates a free HF account, requests access (usually instant), generates a read-only access token; download resumes once shared. EB-NeRD-demo is unaffected (open S3 bucket, no gate). | Adds a manual step outside the pipeline's control before MIND ingestion can start; considered going to the official MIND site instead but that's gated the same way, so no trade-off actually avoided. |
+| 2026-08-21 | `wget`/anonymous download of MIND from `huggingface.co/datasets/yjw1029/MIND` returns HTTP 401, `x-error-code: GatedRepo` | The HF mirror is a gated repo — requires a logged-in, access-granted HuggingFace account, not just a public URL. Likely there to gate MIND's original license terms. | Chaitanya creates a free HF account, requests access (usually instant), generates a read-only access token; download resumes once shared. EB-NeRD-demo is unaffected (open S3 bucket, no gate). | Adds a manual step outside the pipeline's control before MIND ingestion can start; considered going to the official MIND site instead but that's gated the same way, so no trade-off actually avoided. — **resolved**, Chaitanya downloaded both files manually. |
+| 2026-08-21 | `python -m zipfile` on the first `ebnerd_demo.zip` download raised `BadZipFile: File is not a zip file`, even though `file` identified it as a valid zip | Download was truncated mid-transfer over an unstable connection (actual size 21,187,446 bytes vs. the server's reported `Content-Length` of 21,499,083 — ~311 KB missing from the end, exactly where a zip's central directory lives). The backgrounded `wget` still reported exit code 0 despite this, so exit code alone wasn't a reliable success signal. | Chaitanya re-downloaded manually; new file's byte count matches `Content-Length` and opens cleanly with `zipfile`. | Considered `wget -c` (resume) to avoid re-pulling ~20 MB, but resume can silently fail to reconcile on an unstable connection — chose a clean re-download instead since the file is small enough that the cost difference is negligible. |
