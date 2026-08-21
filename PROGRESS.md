@@ -59,9 +59,13 @@ Chaitanya's two manual actions (below) unblock the critical path.
 
 ## Blocked on Chaitanya (do these early — they gate everything)
 
-- [ ] **Register on Codabench, MIND competition** — https://www.codabench.org/competitions/13967/
-- [ ] **Register on Codabench, RecSys 2024 / EB-NeRD** — https://www.codabench.org/competitions/2469/
-- [ ] **Accept the GitHub Classroom assignment** (link on Moodle) and paste the repo URL here
+- [x] **Register on Codabench, MIND competition** — done 2026-08-21
+- [x] **Register on Codabench, RecSys 2024 / EB-NeRD** — done 2026-08-21
+- [ ] **Accept the GitHub Classroom assignment** — **blocked: invite link not yet found
+      on Moodle.** Chaitanya checked and couldn't locate it as of 2026-08-21. Does not
+      block Phase 1 (local pipeline work needs no remote). Only affects where this repo
+      eventually gets pushed. Check assignment page body text, announcements/forum, and
+      course email before asking the instructor/classmates.
 
 Repo URL: _not yet provided_
 
