@@ -6,10 +6,12 @@
 
 ## Where we are right now
 
-**Phase 0 — Orientation & Scaffolding.** Nearly done.
-Repository scaffolded, operating contract written, plain-language walkthrough of the
-whole assignment delivered and recall-checked (see `LEARNING.md`, `GLOSSARY.md`). Next:
-unblock the three manual actions below, then start Phase 1 (Q1 pipeline).
+**Phase 0 complete**, tagged `phase-0-complete`. Repository scaffolded, operating
+contract written, plain-language walkthrough of the whole assignment delivered and
+recall-checked (see `LEARNING.md`, `GLOSSARY.md`), Codabench registrations done.
+
+**Phase 1 — Q1 reproducible data pipeline.** Starting now. First step: teach what a
+"unified schema" means for MIND vs. EB-NeRD before downloading anything.
 
 ---
 
@@ -19,7 +21,7 @@ Deadline **27 Aug 2026**. Budget ~20 focused hours across 6 days.
 
 | Phase | What | Budget | Status |
 |---|---|---|---|
-| 0 | Orientation & scaffolding | 1.5 h | 🔄 in progress |
+| 0 | Orientation & scaffolding | 1.5 h | ✅ done — tagged `phase-0-complete` |
 | 1 | Q1 — reproducible data pipeline | 4 h | ⬜ not started |
 | 2 | Q2 — BM25 lexical retrieval | 4 h | ⬜ not started |
 | 3 | Q3 — semantic retrieval (embeddings) | 3.5 h | ⬜ not started |
