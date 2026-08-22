@@ -122,33 +122,41 @@ Only then, fix it. Log it in the **Error Log** section of `PROGRESS.md` so the s
 problem is never re-debugged from scratch in a future session.
 
 ### R10 — Adversarial self-check before code is presented as done
-R9 handles errors after they happen. This is what happens **before** — the point is to
-catch the same class of bug on the first pass, not wait for Chaitanya (or a traceback)
-to find it. Before showing any function or script as finished, check it for real —
-trace through an actual example, don't just eyeball it — against:
+R9 handles errors after they happen; this is what happens **before** — catch the bug on
+the first pass instead of waiting for Chaitanya or a traceback to find it. Before showing
+any function or script as finished, actively try to break it: trace a genuinely hostile
+input through it, not just the happy-path example already in front of you.
 
-- **Delimiter/separator collisions.** Any join or split on a fixed character or string
-  (`"||"`, a comma, the `-1`/`-0` suffix convention) — could that exact sequence appear
-  *inside* the data itself, not just between fields?
-- **Null / missing-value propagation.** What happens when a value is null — silently
-  dropped, or does `.str.split()` / `.list.len()` propagate the null instead of treating
-  it as empty? Check against null rates already logged in `GLOSSARY.md`/`PROGRESS.md`
-  (e.g. MIND history 2.1% null = cold-start, EB-NeRD demographics 97% null, EB-NeRD
-  `article_id` in behaviors 70% null).
-- **Empty collections.** Empty string, empty list, a user with zero history — crash, or
-  a silently wrong-but-plausible result?
-- **Boundary/off-by-one conditions.** Any indexing, slicing, top-K cutoff, or rank.
-- **Type coercion surprises.** Implicit casts, string-vs-int comparisons, joining on
-  differently-typed keys across the two datasets.
+This is a mindset, not a fixed checklist — the specific failure mode changes with the
+code. The question is always some version of *"what input, state, or timing would make
+this silently wrong rather than loudly wrong?"* Illustrative, not exhaustive:
+
+- A join/split character or convention that could also appear *inside* the data itself,
+  not just between fields — as happened with `ingest_mind.py`'s original `"||"`
+  separator colliding with entity JSON text (2026-08-22, caught by Chaitanya before it
+  ever ran — see `PROGRESS.md`'s error log).
+- A null, empty, or zero-length input that the happy-path example never exercises —
+  check against null rates already logged in `GLOSSARY.md`/`PROGRESS.md` (MIND history
+  2.1% null = cold-start, EB-NeRD demographics 97% null, EB-NeRD `article_id` in
+  behaviors 70% null).
+- An off-by-one at a boundary — the first/last element, an inclusive-vs-exclusive cutoff,
+  a top-K rank.
+- Two similar-looking values that silently mean different things — a numeric ID vs. its
+  string form, MIND time vs. EB-NeRD time, a count that's 0-indexed here and 1-indexed
+  there.
+- Behaviour that changes at 10× or 1000× the scale of the test data (MIND-small vs.
+  MINDlarge_test; EB-NeRD-demo vs. EB-NeRD-large), even if the logic looks
+  scale-independent.
+- Two inputs meant to correspond but able to drift out of sync — a join key that looks
+  the same but was cast differently upstream, a schema that changed without this code
+  noticing.
 
 Where a failure mode is plausible and cheap to check, **write a tiny adversarial test
-with constructed data** proving it's handled — real sample files may simply not happen
-to contain the edge case, the way `ingest_mind.py`'s entity-JSON delimiter bug
-(2026-08-22, `PROGRESS.md` error log) slipped past a first read *and* a real-data smoke
-test, and was only caught because Chaitanya asked "what if `||` appears in an entry?"
-State explicitly, in the message presenting the code, which of these were checked and
-what was found — including "checked, none apply here" — so this is never a silent step
-taken on trust.
+with deliberately constructed data** proving it's handled — real sample files often
+don't happen to contain the edge case, which is why testing only against them isn't
+enough. State explicitly, in the message presenting the code, what was actively tried to
+break it and what was found — including "tried X, Y, Z; none apply here" — so this is
+never a silent step taken on trust.
 
 ---
 
