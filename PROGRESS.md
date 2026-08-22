@@ -10,11 +10,11 @@
 contract written, plain-language walkthrough of the whole assignment delivered and
 recall-checked (see `LEARNING.md`, `GLOSSARY.md`), Codabench registrations done.
 
-**Phase 1 — Q1 reproducible data pipeline.** In progress. Unified-schema concept taught,
-schema-design decision made (D3), concrete columns defined, raw data downloaded and
-verified, dev environment (`.venv` + `requirements.txt`, D4) set up. Next: write the
-ingestion code (`src/newsrec/ingest_mind.py`, `src/newsrec/ingest_ebnerd.py`) that reads
-the raw files and produces the three unified-schema tables — Q1.2.
+**Phase 1 — Q1 reproducible data pipeline.** In progress. Environment and data ready,
+`ingest_mind.py` has `load_articles` and `load_behaviors` (unified `articles` and
+`impressions` tables), both verified against real data. Next: `load_history` for MIND
+(the `impressions` table's per-user reading history — the "collapse repeated inline
+history down to one row per user" reshaping decided back in the unified-schema step).
 
 ---
 
@@ -64,6 +64,19 @@ in Phase 4 beyond what Q9 requires.
 - [x] Schema-design decision (D3): 3 tables (articles, impressions, history), Chaitanya
       chose over a 4-table (+users) and a 2-table (inline history) alternative. Concrete
       columns defined in `ARCHITECTURE.md`.
+- [x] Environment set up (D4/D5): `.venv` + `requirements.txt`, polars 1.43.2 + pyarrow
+      25.0.1. Raw data downloaded and verified against notebook-confirmed row counts.
+- [x] Added R10 to the operating contract (adversarial self-check before code is done),
+      applied to the skill template too. Prompted by a real bug Chaitanya caught in
+      `load_articles` before it ran.
+- [x] `src/newsrec/ingest_mind.py::load_articles` — MIND `news.tsv` → unified `articles`.
+      Verified: 51,282 rows, correct ID prefixing, entities_raw as list[str].
+- [x] `src/newsrec/ingest_mind.py::load_behaviors` — MIND `behaviors.tsv` → unified
+      `impressions`. R10 checks done against real data before presenting: timestamp
+      format parses MIND's single-digit hours correctly, every impression token matches
+      `N<digits>-[01]` exactly (no stray dashes/spaces to confuse the suffix-stripping
+      regex), no null/empty impressions field, no zero-click rows in train. Verified:
+      156,965 rows, row 0 matches the provided notebook's shown example exactly.
 
 ## Next step
 
