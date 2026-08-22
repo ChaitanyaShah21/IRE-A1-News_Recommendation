@@ -10,11 +10,13 @@
 contract written, plain-language walkthrough of the whole assignment delivered and
 recall-checked (see `LEARNING.md`, `GLOSSARY.md`), Codabench registrations done.
 
-**Phase 1 — Q1 reproducible data pipeline.** In progress. Environment and data ready,
-`ingest_mind.py` has `load_articles` and `load_behaviors` (unified `articles` and
-`impressions` tables), both verified against real data. Next: `load_history` for MIND
-(the `impressions` table's per-user reading history — the "collapse repeated inline
-history down to one row per user" reshaping decided back in the unified-schema step).
+**Phase 1 — Q1 reproducible data pipeline.** In progress. `ingest_mind.py` is complete —
+all three unified-schema tables (articles, impressions, history), each verified against
+real MINDsmall_train data. Next: `ingest_ebnerd.py`, mirroring the same three functions
+for EB-NeRD's Parquet files — its `impressions`/`history` are already close to the
+unified shape (no MIND-style string-splitting needed), but its scale (EB-NeRD-large is
+12M+ rows) means the `.lazy()` pattern from the provided notebook actually matters here,
+unlike MIND-small which fit comfortably in memory eagerly.
 
 ---
 
@@ -77,6 +79,17 @@ in Phase 4 beyond what Q9 requires.
       `N<digits>-[01]` exactly (no stray dashes/spaces to confuse the suffix-stripping
       regex), no null/empty impressions field, no zero-click rows in train. Verified:
       156,965 rows, row 0 matches the provided notebook's shown example exactly.
+- [x] `src/newsrec/ingest_mind.py::load_history` — MIND `behaviors.tsv` → unified
+      `history` (one row per user). R10 check done *before* writing this one, not after:
+      verified the D3 decision's load-bearing assumption (MIND's history string is
+      identical across all of a user's impression rows) against real data — 0 of 33,617
+      multi-row users had more than one distinct history string. Also hit and fixed the
+      exact null-propagation trap `CLAUDE.md`'s original R9 example describes:
+      `.str.split()` on a cold-start user's null history stays null, not `[]`, until
+      `.fill_null([])` is applied. Verified: 50,000 unique users, 0 nulls in
+      `history_article_ids`, 892 cold-start users with genuine empty lists.
+- [x] **`ingest_mind.py` complete** — all three unified-schema tables (articles,
+      impressions, history) now produced from MIND's raw files.
 
 ## Next step
 
