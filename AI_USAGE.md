@@ -12,7 +12,7 @@ Chaitanya's `/model` choice) — noted per-commit in git history, not tracked he
 
 | File | Authorship | Notes |
 |---|---|---|
-| `CLAUDE.md` | AI-generated from human specification | Chaitanya specified every rule; wording is AI |
+| `CLAUDE.md` | AI-generated from human specification | Chaitanya specified every rule (incl. R10, added 2026-08-22 after he asked how to catch such bugs automatically); wording is AI |
 | `PROMPT.md` | AI-generated | Verbatim copy of `CLAUDE.md` |
 | `ARCHITECTURE.md` | AI-generated, human-decided | All decisions chosen by Chaitanya |
 | `PROGRESS.md` | AI-maintained | |

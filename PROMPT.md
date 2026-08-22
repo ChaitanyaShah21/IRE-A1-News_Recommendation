@@ -121,11 +121,40 @@ differently.
 Only then, fix it. Log it in the **Error Log** section of `PROGRESS.md` so the same
 problem is never re-debugged from scratch in a future session.
 
+### R10 — Adversarial self-check before code is presented as done
+R9 handles errors after they happen. This is what happens **before** — the point is to
+catch the same class of bug on the first pass, not wait for Chaitanya (or a traceback)
+to find it. Before showing any function or script as finished, check it for real —
+trace through an actual example, don't just eyeball it — against:
+
+- **Delimiter/separator collisions.** Any join or split on a fixed character or string
+  (`"||"`, a comma, the `-1`/`-0` suffix convention) — could that exact sequence appear
+  *inside* the data itself, not just between fields?
+- **Null / missing-value propagation.** What happens when a value is null — silently
+  dropped, or does `.str.split()` / `.list.len()` propagate the null instead of treating
+  it as empty? Check against null rates already logged in `GLOSSARY.md`/`PROGRESS.md`
+  (e.g. MIND history 2.1% null = cold-start, EB-NeRD demographics 97% null, EB-NeRD
+  `article_id` in behaviors 70% null).
+- **Empty collections.** Empty string, empty list, a user with zero history — crash, or
+  a silently wrong-but-plausible result?
+- **Boundary/off-by-one conditions.** Any indexing, slicing, top-K cutoff, or rank.
+- **Type coercion surprises.** Implicit casts, string-vs-int comparisons, joining on
+  differently-typed keys across the two datasets.
+
+Where a failure mode is plausible and cheap to check, **write a tiny adversarial test
+with constructed data** proving it's handled — real sample files may simply not happen
+to contain the edge case, the way `ingest_mind.py`'s entity-JSON delimiter bug
+(2026-08-22, `PROGRESS.md` error log) slipped past a first read *and* a real-data smoke
+test, and was only caught because Chaitanya asked "what if `||` appears in an entry?"
+State explicitly, in the message presenting the code, which of these were checked and
+what was found — including "checked, none apply here" — so this is never a silent step
+taken on trust.
+
 ---
 
 ## 3. Memory and history rules
 
-### R10 — Session start protocol
+### R11 — Session start protocol
 At the beginning of every session, **before responding to anything else**, read:
 1. `PROGRESS.md` — what is done, what is next, what is open, and the error log.
 2. `ARCHITECTURE.md` — the current design and every decision made so far.
@@ -133,7 +162,7 @@ At the beginning of every session, **before responding to anything else**, read:
 Then state, in two or three lines, where we are and what the next step is. Chaitanya
 should never have to re-explain context.
 
-### R11 — Update living documents at the end of every step
+### R12 — Update living documents at the end of every step
 Not at the end of the phase — the end of every **step**. Files and their jobs:
 
 | File | Job |
@@ -145,7 +174,7 @@ Not at the end of the phase — the end of every **step**. Files and their jobs:
 | `SCALE_NOTES.md` | "Where this breaks at 10×" observations, captured as they occur. |
 | `AI_USAGE.md` | Prompt log and authorship marking — a graded deliverable (Q7.4). |
 
-### R12 — Git discipline
+### R13 — Git discipline
 - **Commit after every completed step**, with a message saying what changed and why.
 - **Tag at the end of every phase**: `phase-0-complete`, `phase-1-complete`, …
   Reverting is then `git checkout phase-N-complete`.
@@ -153,7 +182,7 @@ Not at the end of the phase — the end of every **step**. Files and their jobs:
   `.gitignore` enforces this; verify with `git status` before committing.
 - Commit messages are written for a reader six months from now.
 
-### R13 — Track authorship as we go
+### R14 — Track authorship as we go
 Every file gets an authorship note in `AI_USAGE.md`: AI-generated, AI-generated then
 human-edited, or human-written. This is required by assignment Q7.4 and is miserable
 to reconstruct after the fact.
@@ -222,7 +251,8 @@ Each phase runs the same loop:
 
 ```
 concept teaching  →  required reading  →  options presented  →  Chaitanya chooses
-    →  small implementation steps  →  test  →  update living docs  →  commit  →  tag
+    →  small implementation steps  →  adversarial self-check (R10)  →  test
+    →  update living docs  →  commit  →  tag
 ```
 
 Phases are listed with time budgets in `PROGRESS.md`.
