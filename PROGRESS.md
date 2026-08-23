@@ -120,7 +120,14 @@ Chaitanya's two manual actions (below) unblock the critical path.
       eventually gets pushed. Check assignment page body text, announcements/forum, and
       course email before asking the instructor/classmates.
 
-Repo URL: _not yet provided_
+Repo URL: _not yet provided_ (GitHub Classroom, still blocked — see above)
+
+**Private backup remote** (separate from GitHub Classroom): `origin` →
+`git@github.com:ChaitanyaShah21/IRE-A1-News_Recommendation.git` (private), set up
+2026-08-22 via SSH (key already registered with GitHub, confirmed via `ssh -T`). Pushed
+`main` + `phase-0-complete` tag. Push after every commit going forward, same as local
+git discipline (R13) — this isn't a substitute for the eventual GitHub Classroom repo,
+just insurance until that's found.
 
 - [x] **Grant HuggingFace access to `yjw1029/MIND`** — done 2026-08-21, MINDsmall_train.zip
       and MINDsmall_dev.zip downloaded successfully by Chaitanya.
