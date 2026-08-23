@@ -10,13 +10,11 @@
 contract written, plain-language walkthrough of the whole assignment delivered and
 recall-checked (see `LEARNING.md`, `GLOSSARY.md`), Codabench registrations done.
 
-**Phase 1 — Q1 reproducible data pipeline.** In progress. `ingest_mind.py` is complete —
-all three unified-schema tables (articles, impressions, history), each verified against
-real MINDsmall_train data. Next: `ingest_ebnerd.py`, mirroring the same three functions
-for EB-NeRD's Parquet files — its `impressions`/`history` are already close to the
-unified shape (no MIND-style string-splitting needed), but its scale (EB-NeRD-large is
-12M+ rows) means the `.lazy()` pattern from the provided notebook actually matters here,
-unlike MIND-small which fit comfortably in memory eagerly.
+**Phase 1 — Q1 reproducible data pipeline.** In progress. Both `ingest_mind.py` and
+`ingest_ebnerd.py` are complete and their outputs verified to actually `pl.concat()`
+together cleanly. Next: Q1.3, the temporal train/val/test split — the "never split
+interaction data randomly" rule from `CLAUDE.md` §6, applied for real for the first
+time.
 
 ---
 
@@ -90,6 +88,20 @@ in Phase 4 beyond what Q9 requires.
       `history_article_ids`, 892 cold-start users with genuine empty lists.
 - [x] **`ingest_mind.py` complete** — all three unified-schema tables (articles,
       impressions, history) now produced from MIND's raw files.
+- [x] Decision D6: dropped EB-NeRD's context `article_id` field (which article page a
+      recommendation module was shown on) from the unified schema — found while
+      inspecting real EB-NeRD data, not part of the original D3 column list. Nothing in
+      Q1–Q9 needs it.
+- [x] `src/newsrec/ingest_ebnerd.py` — all three unified-schema functions
+      (`load_articles`, `load_behaviors`, `load_history`), built on `pl.scan_parquet`
+      (lazy) with `.collect()` at the end. `load_history` needed no row-collapsing —
+      EB-NeRD's history file is already one row per user, confirmed 1:1 against
+      behaviors' unique user count on real demo data (1,590 = 1,590).
+- [x] **`ingest_ebnerd.py` complete.** **Unified schema empirically verified**, not just
+      designed: `pl.concat()`'d all three MIND/EB-NeRD table pairs and confirmed they
+      combine cleanly — caught and fixed a real Float32/Float64 mismatch in the process
+      (error log above). Combined: 63,059 articles, 181,689 impressions, 51,590 users'
+      history.
 
 ## Next step
 
@@ -145,6 +157,7 @@ we may have already solved it.
 
 | Date | Error | Root cause | Fix chosen | Trade-off accepted |
 |---|---|---|---|---|
+| 2026-08-22 | `pl.concat([mind_articles_df, ebnerd_articles_df])` raised `type Float32 is incompatible with expected type Float64` (column `sentiment_score`), and the same for `impressions`' `read_time` | MIND's null placeholder columns default to `Float64` (`pl.lit(None, dtype=pl.Float64)`), but EB-NeRD's real `sentiment_score`/`read_time`/`scroll_percentage` columns are natively `Float32` in the source Parquet files - the two tables' schemas looked compatible by eye (both "float") but weren't bit-for-bit identical types | Cast all three EB-NeRD columns to `Float64` explicitly in `ingest_ebnerd.py` | None meaningful - Float64 is strictly more precise, so casting up loses nothing; found by actually running `pl.concat()` as an adversarial test (R10) rather than assuming matching column names implied matching dtypes |
 | 2026-08-22 | Caught before running, not a runtime error: `ingest_mind.load_articles` originally joined `title_entities`/`abstract_entities` into one string with `pl.concat_str(..., separator="||")` | A stray literal `"||"` inside either JSON string (e.g. inside `SurfaceForms` text pulled from an article) would make a later split on `"||"` produce more than two pieces, silently corrupting that row's entity data — flagged by Chaitanya, not found by testing | Switched to `pl.concat_list([...])`, storing the two JSON strings as a genuine 2-element list column instead of a delimited string — no separator, so nothing to collide with | None meaningful — `list[str]` is the more natural Polars representation here anyway; no downside versus the string-join approach it replaced |
 | 2026-08-21 | `wget`/anonymous download of MIND from `huggingface.co/datasets/yjw1029/MIND` returns HTTP 401, `x-error-code: GatedRepo` | The HF mirror is a gated repo — requires a logged-in, access-granted HuggingFace account, not just a public URL. Likely there to gate MIND's original license terms. | Chaitanya creates a free HF account, requests access (usually instant), generates a read-only access token; download resumes once shared. EB-NeRD-demo is unaffected (open S3 bucket, no gate). | Adds a manual step outside the pipeline's control before MIND ingestion can start; considered going to the official MIND site instead but that's gated the same way, so no trade-off actually avoided. — **resolved**, Chaitanya downloaded both files manually. |
 | 2026-08-21 | `python -m zipfile` on the first `ebnerd_demo.zip` download raised `BadZipFile: File is not a zip file`, even though `file` identified it as a valid zip | Download was truncated mid-transfer over an unstable connection (actual size 21,187,446 bytes vs. the server's reported `Content-Length` of 21,499,083 — ~311 KB missing from the end, exactly where a zip's central directory lives). The backgrounded `wget` still reported exit code 0 despite this, so exit code alone wasn't a reliable success signal. | Chaitanya re-downloaded manually; new file's byte count matches `Content-Length` and opens cleanly with `zipfile`. | Considered `wget -c` (resume) to avoid re-pulling ~20 MB, but resume can silently fail to reconcile on an unstable connection — chose a clean re-download instead since the file is small enough that the cost difference is negligible. |
