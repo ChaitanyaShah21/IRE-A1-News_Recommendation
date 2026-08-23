@@ -15,7 +15,12 @@ five sub-requirements done and verified against real data, not just designed: ra
 downloaded, ingested into a genuinely unified schema (proven via `pl.concat()`),
 temporally split with the leakage invariant checked directly, persisted as a feature
 store, and a one-command rebuild that's been run down both its success and failure
-paths.
+paths (including a real path-resolution bug found and fixed after Chaitanya questioned
+whether it actually worked "from anywhere" — see error log).
+
+**Phase 2 — Q2 BM25.** Not yet started content-wise. The Phase 1→2 recall quiz is
+already done (3/3, see `LEARNING.md`) — the next session should go straight to teaching
+BM25, not repeat it.
 
 ---
 
@@ -164,8 +169,14 @@ in Phase 4 beyond what Q9 requires.
 
 ## Next step
 
-Plain-language walkthrough of the assignment, then the technical framing. After that,
-Chaitanya's two manual actions (below) unblock the critical path.
+**Phase 2 — Q2, BM25 lexical retrieval.** The Phase 1→2 recall quiz is already done
+(3/3 correct, see `LEARNING.md`) — a new session does **not** need to repeat it.
+Start directly with teaching BM25 (Best Match 25) itself: real-world analogy → technical
+definition (term frequency, inverse document frequency, length normalisation, broken
+into named parts) → required reading → comprehension check, per R1, before any code.
+Pacing note: Chaitanya chose to keep full R10/R6 depth into Phase 2 rather than scope
+down now (see the time-budget flag above) — revisit that conversation explicitly if Q2
+is not keeping pace with its 4h budget, don't silently let it slide either way.
 
 ---
 

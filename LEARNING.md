@@ -30,6 +30,17 @@ since nothing broke; corrected via re-explanation, not code. Points to remember:
 
 ---
 
+## Phase 1 → Phase 2 recall check (2026-08-23)
+
+Three questions before starting Phase 2: why dataset-prefix every ID, why not
+random-shuffle both datasets into one split, why raw data can't be deleted once the
+feature store exists. All three answered correctly on the first pass — Q2 and Q3 got a
+small addition each (mixing two datasets' unrelated timelines is a second problem beyond
+plain leakage; raw data is the only *irreplaceable* thing in the pipeline, since
+processed data is fully derived and rebuildable from it). No re-teaching needed.
+
+---
+
 ## Phase 1 — Unified schema
 
 Required reading for this concept was done directly against ground truth rather than
