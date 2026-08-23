@@ -10,12 +10,33 @@
 contract written, plain-language walkthrough of the whole assignment delivered and
 recall-checked (see `LEARNING.md`, `GLOSSARY.md`), Codabench registrations done.
 
-**Phase 1 — Q1 reproducible data pipeline.** In progress. Q1.1–Q1.4 all done and
-verified against real data: raw files downloaded, ingested into the unified schema,
-temporally split, and persisted to `data/processed/` as the feature store. Next: Q1.5,
-the one-command rebuild script (`scripts/build_pipeline.py`) — wiring `build.py` up to
-config files (`configs/mind.yaml`, `configs/ebnerd.yaml`) so no path is hardcoded, per
-`ARCHITECTURE.md`'s layout table.
+**Phase 1 — Q1 reproducible data pipeline: complete**, tagged `phase-1-complete`. All
+five sub-requirements done and verified against real data, not just designed: raw data
+downloaded, ingested into a genuinely unified schema (proven via `pl.concat()`),
+temporally split with the leakage invariant checked directly, persisted as a feature
+store, and a one-command rebuild that's been run down both its success and failure
+paths.
+
+---
+
+## ⚠️ Time budget flag (R8) — read this before Phase 2
+
+Phases 0+1 were budgeted 5.5h combined; the real depth of work across this session —
+every function verified against real data before being shown as done, several real bugs
+caught in the process (entity-JSON delimiter collision, Float32/Float64 concat
+mismatch, the null-propagation trap in cold-start history), multiple genuine R6 decision
+points worked through with trade-offs (D3–D10) — almost certainly ran well past that
+budget, even though no session tracked exact wall-clock hours against it. **Today is
+2026-08-23; the deadline is 2026-08-27 — as little as 4–5 days remain**, against
+Phases 2–6's combined 16h budget.
+
+This is the deliberate trade-off `CLAUDE.md`'s prime directive asks for ("if forced to
+choose between shipping faster and understanding, choose understanding and say what it
+costs") — not a silent slip. But per R8, it needs to be said plainly, not absorbed:
+**at the start of Phase 2, explicitly decide with Chaitanya whether to keep this depth
+for all remaining phases, or scope down** — e.g. lighter R10 checks on lower-risk code,
+fewer alternatives per R6 decision, tighter recall quizzes — using the designated
+drop-first list below as the starting point.
 
 ---
 
@@ -26,7 +47,7 @@ Deadline **27 Aug 2026**. Budget ~20 focused hours across 6 days.
 | Phase | What | Budget | Status |
 |---|---|---|---|
 | 0 | Orientation & scaffolding | 1.5 h | ✅ done — tagged `phase-0-complete` |
-| 1 | Q1 — reproducible data pipeline | 4 h | ⬜ not started |
+| 1 | Q1 — reproducible data pipeline | 4 h | ✅ done — tagged `phase-1-complete` (ran well over budget, see note below) |
 | 2 | Q2 — BM25 lexical retrieval | 4 h | ⬜ not started |
 | 3 | Q3 — semantic retrieval (embeddings) | 3.5 h | ⬜ not started |
 | 4 | Q4 — evaluation harness | 4 h | ⬜ not started |
@@ -126,6 +147,15 @@ in Phase 4 beyond what Q9 requires.
       survived the round-trip intact.
 - [x] Closed a standing gap: `AI_USAGE.md`'s authorship table only tracked docs, not the
       actual `src/newsrec/*.py` files written this session — added entries for all four.
+- [x] Q1.5 — one-command rebuild (`scripts/build_pipeline.py`, `configs/mind.yaml`,
+      `configs/ebnerd.yaml`). Decision D10: no auto-download for either dataset (check
+      raw files exist, print manual instructions and exit cleanly if not) — simpler than
+      partial automation, and MIND's gating means full automation was never uniform
+      anyway. Tested **both** paths for real, not just the happy one: a full clean
+      `python scripts/build_pipeline.py` run (exit 0, rebuilds the feature store) and a
+      deliberately broken config pointing at a nonexistent raw_root (exit 1, prints the
+      actual download instructions instead of crashing with a bare traceback).
+- [x] **Q1 (all five sub-requirements) is now complete.** Tagged `phase-1-complete`.
 
 ## Next step
 

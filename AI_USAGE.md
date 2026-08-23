@@ -26,6 +26,8 @@ Chaitanya's `/model` choice) — noted per-commit in git history, not tracked he
 | `src/newsrec/ingest_ebnerd.py` | AI-generated, human-decided | Context-`article_id` inclusion (D6) decided by Chaitanya |
 | `src/newsrec/temporal_split.py` | AI-generated, human-decided | Split-source and split-ratio decisions (D7, D8) chosen by Chaitanya |
 | `src/newsrec/build.py` | AI-generated, human-decided | Feature-store layout (D9) chosen by Chaitanya |
+| `scripts/build_pipeline.py` | AI-generated, human-decided | No-auto-download design (D10) chosen by Chaitanya |
+| `configs/mind.yaml`, `configs/ebnerd.yaml` | AI-generated | Raw-data paths, per D10/the Phase 0 "no hardcoded paths" layout decision |
 
 _Appended as files are created._
 
