@@ -10,11 +10,10 @@
 contract written, plain-language walkthrough of the whole assignment delivered and
 recall-checked (see `LEARNING.md`, `GLOSSARY.md`), Codabench registrations done.
 
-**Phase 1 — Q1 reproducible data pipeline.** In progress. Both `ingest_mind.py` and
-`ingest_ebnerd.py` are complete and their outputs verified to actually `pl.concat()`
-together cleanly. Next: Q1.3, the temporal train/val/test split — the "never split
-interaction data randomly" rule from `CLAUDE.md` §6, applied for real for the first
-time.
+**Phase 1 — Q1 reproducible data pipeline.** In progress. Ingestion (Q1.2) and the
+temporal split (Q1.3) are both done and verified against real data for both datasets.
+Next: Q1.4, the feature store — writing the split-tagged tables out to
+`data/processed/` as the actual reusable artefact Q1.5's one-command rebuild produces.
 
 ---
 
@@ -102,6 +101,17 @@ in Phase 4 beyond what Q9 requires.
       combine cleanly — caught and fixed a real Float32/Float64 mismatch in the process
       (error log above). Combined: 63,059 articles, 181,689 impressions, 51,590 users'
       history.
+- [x] Q1.3 — temporal split (`src/newsrec/temporal_split.py`). Verified neither dataset
+      gives 3 labeled partitions at demo/small scale (D7); decided to carve val+test from
+      dev/validation's tail (D7), 70/30 by row-count timestamp cutoff, uniform across
+      both datasets (D8). Found and handled a real subtlety: EB-NeRD's train and
+      validation history files genuinely differ per user, not the same data re-served —
+      `add_history_split` reuses validation's history table for both new val/test
+      sub-partitions rather than treating them as needing separate history data that
+      doesn't exist. Verified on real data: row counts sum correctly, ~70.0% val ratio
+      for both datasets, and the leakage invariant (`train_max < val_min`,
+      `val_max < test_min`) holds strictly for both — this check is the seed of Q9's
+      required `tests/test_no_leakage.py`.
 
 ## Next step
 
@@ -164,6 +174,7 @@ we may have already solved it.
 
 | Date | Error | Root cause | Fix chosen | Trade-off accepted |
 |---|---|---|---|---|
+| 2026-08-22 | Not our bug — a caveat about the provided notebook: its printed MIND train time range (`"11/10/2019 10:00 AM to 11/9/2019 9:59:58 AM"`) is chronologically wrong | The notebook computed it with plain Python `min()`/`max()` on the raw time **strings**, which compares them lexicographically (character by character), not chronologically — `"11/10/..."` sorts before `"11/9/..."` as text even though Nov 9 is earlier in time | None needed in our code — `ingest_mind.load_behaviors` already parses `time` into a real `Datetime` via `.str.strptime()`, so `.min()`/`.max()` on our `timestamp` column are correct (verified: MIND train is actually Nov 9–14, dev is Nov 15). Just don't trust the provided notebook's printed ranges at face value. | None — this only cost us noticing it before it fed into the temporal-split design |
 | 2026-08-22 | `pl.concat([mind_articles_df, ebnerd_articles_df])` raised `type Float32 is incompatible with expected type Float64` (column `sentiment_score`), and the same for `impressions`' `read_time` | MIND's null placeholder columns default to `Float64` (`pl.lit(None, dtype=pl.Float64)`), but EB-NeRD's real `sentiment_score`/`read_time`/`scroll_percentage` columns are natively `Float32` in the source Parquet files - the two tables' schemas looked compatible by eye (both "float") but weren't bit-for-bit identical types | Cast all three EB-NeRD columns to `Float64` explicitly in `ingest_ebnerd.py` | None meaningful - Float64 is strictly more precise, so casting up loses nothing; found by actually running `pl.concat()` as an adversarial test (R10) rather than assuming matching column names implied matching dtypes |
 | 2026-08-22 | Caught before running, not a runtime error: `ingest_mind.load_articles` originally joined `title_entities`/`abstract_entities` into one string with `pl.concat_str(..., separator="||")` | A stray literal `"||"` inside either JSON string (e.g. inside `SurfaceForms` text pulled from an article) would make a later split on `"||"` produce more than two pieces, silently corrupting that row's entity data — flagged by Chaitanya, not found by testing | Switched to `pl.concat_list([...])`, storing the two JSON strings as a genuine 2-element list column instead of a delimited string — no separator, so nothing to collide with | None meaningful — `list[str]` is the more natural Polars representation here anyway; no downside versus the string-join approach it replaced |
 | 2026-08-21 | `wget`/anonymous download of MIND from `huggingface.co/datasets/yjw1029/MIND` returns HTTP 401, `x-error-code: GatedRepo` | The HF mirror is a gated repo — requires a logged-in, access-granted HuggingFace account, not just a public URL. Likely there to gate MIND's original license terms. | Chaitanya creates a free HF account, requests access (usually instant), generates a read-only access token; download resumes once shared. EB-NeRD-demo is unaffected (open S3 bucket, no gate). | Adds a manual step outside the pipeline's control before MIND ingestion can start; considered going to the official MIND site instead but that's gated the same way, so no trade-off actually avoided. — **resolved**, Chaitanya downloaded both files manually. |
