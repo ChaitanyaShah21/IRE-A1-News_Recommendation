@@ -10,10 +10,12 @@
 contract written, plain-language walkthrough of the whole assignment delivered and
 recall-checked (see `LEARNING.md`, `GLOSSARY.md`), Codabench registrations done.
 
-**Phase 1 — Q1 reproducible data pipeline.** In progress. Ingestion (Q1.2) and the
-temporal split (Q1.3) are both done and verified against real data for both datasets.
-Next: Q1.4, the feature store — writing the split-tagged tables out to
-`data/processed/` as the actual reusable artefact Q1.5's one-command rebuild produces.
+**Phase 1 — Q1 reproducible data pipeline.** In progress. Q1.1–Q1.4 all done and
+verified against real data: raw files downloaded, ingested into the unified schema,
+temporally split, and persisted to `data/processed/` as the feature store. Next: Q1.5,
+the one-command rebuild script (`scripts/build_pipeline.py`) — wiring `build.py` up to
+config files (`configs/mind.yaml`, `configs/ebnerd.yaml`) so no path is hardcoded, per
+`ARCHITECTURE.md`'s layout table.
 
 ---
 
@@ -112,6 +114,18 @@ in Phase 4 beyond what Q9 requires.
       for both datasets, and the leakage invariant (`train_max < val_min`,
       `val_max < test_min`) holds strictly for both — this check is the seed of Q9's
       required `tests/test_no_leakage.py`.
+- [x] Q1.4 — feature store (`src/newsrec/build.py`, decision D9: 3 combined files).
+      Verified before writing: MIND's train/dev `news.tsv` files are genuinely different
+      crawls (13,956 of dev's 42,416 articles aren't in train's file at all), so the
+      concat+dedupe on `article_id` is necessary, not defensive boilerplate — and for the
+      28,460 articles present in both, content is identical (0 title mismatches sampled),
+      so `keep="first"` is safe. Ran the full build end to end (2.81s) and verified the
+      Parquet round-trip: 77,015 articles (65,238 MIND after dedupe + 11,777 EB-NeRD,
+      exact expected count), 280,197 impressions, 154,714 history rows — every
+      split/dataset count matches Q1.3's numbers exactly, and list/datetime dtypes
+      survived the round-trip intact.
+- [x] Closed a standing gap: `AI_USAGE.md`'s authorship table only tracked docs, not the
+      actual `src/newsrec/*.py` files written this session — added entries for all four.
 
 ## Next step
 
