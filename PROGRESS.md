@@ -32,11 +32,16 @@ Phases 2–6's combined 16h budget.
 
 This is the deliberate trade-off `CLAUDE.md`'s prime directive asks for ("if forced to
 choose between shipping faster and understanding, choose understanding and say what it
-costs") — not a silent slip. But per R8, it needs to be said plainly, not absorbed:
-**at the start of Phase 2, explicitly decide with Chaitanya whether to keep this depth
-for all remaining phases, or scope down** — e.g. lighter R10 checks on lower-risk code,
-fewer alternatives per R6 decision, tighter recall quizzes — using the designated
-drop-first list below as the starting point.
+costs") — not a silent slip.
+
+**Decision (2026-08-23):** raised plainly per R8, with a phase-by-phase risk breakdown
+(Q5's cloud setup + large-bundle downloads + Codabench submission is the real deadline
+risk, not teaching depth). Chaitanya chose to **keep the original full pace** for Q2
+rather than scope down now, and revisit explicitly if Q2 is not keeping up with its 4h
+budget. Also flagged: Q9 (anti-gaming ablation + leakage test) has no dedicated budget
+line in the phase table — folding it into Q4's evaluation-harness phase, since the
+leakage test's invariant is already built (Q1.3's `train_max < val_min < test_min`
+check) and the ablation is evaluation-harness-adjacent work.
 
 ---
 
@@ -48,9 +53,9 @@ Deadline **27 Aug 2026**. Budget ~20 focused hours across 6 days.
 |---|---|---|---|
 | 0 | Orientation & scaffolding | 1.5 h | ✅ done — tagged `phase-0-complete` |
 | 1 | Q1 — reproducible data pipeline | 4 h | ✅ done — tagged `phase-1-complete` (ran well over budget, see note below) |
-| 2 | Q2 — BM25 lexical retrieval | 4 h | ⬜ not started |
+| 2 | Q2 — BM25 lexical retrieval | 4 h | 🔄 in progress, started 2026-08-23 — pacing checkpoint: revisit budget conversation if this runs over |
 | 3 | Q3 — semantic retrieval (embeddings) | 3.5 h | ⬜ not started |
-| 4 | Q4 — evaluation harness | 4 h | ⬜ not started |
+| 4 | Q4 — evaluation harness + Q9 (folded in, no separate budget line) | 4 h | ⬜ not started |
 | 5 | Q5 — scale-up & Codabench submission | 2.5 h | ⬜ not started |
 | 6 | Q6/Q7 — design note & deliverables | 2 h | ⬜ not started |
 
