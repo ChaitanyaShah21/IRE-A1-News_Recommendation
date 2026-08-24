@@ -167,7 +167,48 @@ in Phase 4 beyond what Q9 requires.
       actual download instructions instead of crashing with a bare traceback).
 - [x] **Q1 (all five sub-requirements) is now complete.** Tagged `phase-1-complete`.
 
+### Phase 2 (in progress)
+- [x] BM25 concept taught per R1 (analogy → formula broken into named parts → reading →
+      comprehension check). Three questions asked; two needed correcting and are logged in
+      `LEARNING.md`: IDF cannot explain why one *document* beats another (it depends only
+      on term and corpus), and `k₁=0` deletes length normalisation too, because the whole
+      length bracket is multiplied by `k₁`. A follow-up confirmed BM25 damps repetition
+      with a saturating rational function, **not** a log of term frequency — that's TF-IDF.
+- [x] CSR/CSC re-taught from scratch on request, worked by hand on constructed corpora.
+      Chaitanya's second attempt got the row structure and the empty-row case right;
+      the correction was that `data[p]` pairs with `indices[p]` by tape position, not
+      with the vocabulary in alphabetical order.
+- [x] Decisions D11–D16 taken (see `ARCHITECTURE.md`), each against measured facts read
+      off the real feature store rather than assumed — including the two that set the
+      recall ceiling: **100%** of val ground-truth clicks exist in our `articles` table
+      (so no artificial cap), and only **0.19% / 0.47%** are articles the user had already
+      read (so D15's history exclusion costs at most half a percent).
+- [x] Q2.1 — inverted index (`src/newsrec/retrieval/bm25.py`): Unicode tokeniser +
+      sparse document-term matrix with BM25 document-side weights precomputed.
+      **18/18 adversarial tests pass** (`tests/test_bm25_index.py`), and verified on the
+      real corpora: MIND 65,238 docs / 60,951 terms / 2.36 M non-zeros in 1.70 s;
+      EB-NeRD 11,777 / 31,642 / 269 K in 0.19 s; peak RSS 0.51 GB. Sanity checks that
+      confirm the concept rather than just the code: `the` has IDF 0.26 against a corpus
+      max of 10.68; EB-NeRD's top terms come out as the Danish function words `i`/`og`/`er`
+      with `ø`/`þ` intact; and `n(t)` equals the posting-list length for all 92,593 terms.
+- [x] `pytest.ini` added so `pytest` works from the repo root without `PYTHONPATH=src` —
+      same class of "only works from the right directory" bug as the Q1.5 error-log entry.
+- [x] `scipy==1.18.1`, `pytest==9.1.1` pinned in `requirements.txt`.
+
 ## Next step
+
+**Q2.2/2.3/2.4 — the query side.** Build each user's query from the titles of their last
+10 clicked articles (D12), score in batches against the index (D14's memory constraint —
+a full dense score matrix is ~9.9 GB for MIND val alone, see `SCALE_NOTES.md`), exclude
+articles already in the user's history (D15), take top-K, and report recall@{50, 100, 200}
+for both datasets. Run the binary-query ablation from D16 alongside it. Watch for the
+cold-start case: 1,407 MIND val users have empty history and therefore no query at all —
+decide and document what they retrieve rather than letting them fall out silently.
+
+---
+
+<details>
+<summary>Superseded next-step note from the previous session</summary>
 
 **Phase 2 — Q2, BM25 lexical retrieval.** The Phase 1→2 recall quiz is already done
 (3/3 correct, see `LEARNING.md`) — a new session does **not** need to repeat it.
@@ -178,12 +219,22 @@ Pacing note: Chaitanya chose to keep full R10/R6 depth into Phase 2 rather than 
 down now (see the time-budget flag above) — revisit that conversation explicitly if Q2
 is not keeping pace with its 4h budget, don't silently let it slide either way.
 
+</details>
+
+The pacing note above still stands: full R10/R6 depth was chosen for Q2 — revisit
+explicitly if Q2 runs past its 4h budget, don't let it slide silently either way.
+
 ---
 
 ## Blocked on Chaitanya (do these early — they gate everything)
 
 - [x] **Register on Codabench, MIND competition** — done 2026-08-21
 - [x] **Register on Codabench, RecSys 2024 / EB-NeRD** — done 2026-08-21
+- [ ] **Download the large test bundles** — raised 2026-08-24. `ebnerd_testset.zip` and
+      `MINDlarge_test.zip` are *required* for Q5 and are several GB each; Phase 5 cannot
+      start without them and is the real deadline risk. Verify each finished file's byte
+      count against the server's `Content-Length` — a `wget` exit code of 0 is not a
+      reliable success signal (see the truncated `ebnerd_demo.zip` in the error log).
 - [ ] **Accept the GitHub Classroom assignment** — **blocked: invite link not yet found
       on Moodle.** Chaitanya checked and couldn't locate it as of 2026-08-21. Does not
       block Phase 1 (local pipeline work needs no remote). Only affects where this repo

@@ -28,6 +28,9 @@ Chaitanya's `/model` choice) — noted per-commit in git history, not tracked he
 | `src/newsrec/build.py` | AI-generated, human-decided | Feature-store layout (D9) chosen by Chaitanya |
 | `scripts/build_pipeline.py` | AI-generated, human-decided | No-auto-download design (D10) chosen by Chaitanya |
 | `configs/mind.yaml`, `configs/ebnerd.yaml` | AI-generated | Raw-data paths, per D10/the Phase 0 "no hardcoded paths" layout decision |
+| `src/newsrec/retrieval/bm25.py` | AI-generated, human-decided | Tokenisation, parameters, implement-vs-import, and query-term weighting (D11, D13, D14, D16) chosen by Chaitanya |
+| `tests/test_bm25_index.py` | AI-generated | R10 adversarial suite, 18 tests; the Danish-tokenisation case was recorded as a requirement in D11 before the code existed |
+| `pytest.ini` | AI-generated | Puts `src/` on the path so `pytest` works from the repo root |
 
 _Appended as files are created._
 

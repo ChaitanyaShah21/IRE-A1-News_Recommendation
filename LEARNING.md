@@ -41,6 +41,57 @@ processed data is fully derived and rebuildable from it). No re-teaching needed.
 
 ---
 
+## Phase 2 — BM25 (Best Match 25) and the inverted index
+
+Issued 2026-08-23, before any Phase 2 code. Read in this order — each one assumes the
+previous.
+
+| Source | What to take from it | Time |
+|---|---|---|
+| Manning, Raghavan & Schütze, *Introduction to Information Retrieval*, §1.1–1.2 (free online) | What an inverted index *is* as a data structure — the term → posting-list mapping, and why you never score a query by scanning every document. Stop once you can draw the index for a 3-document toy corpus. | ~15 min |
+| Same book, §6.2 (term frequency & weighting) then §11.4.3 (Okapi BM25) | Why raw term counts are a bad relevance score, how inverse document frequency fixes part of it, and then the exact BM25 formula with `k1` and `b`. §11.4.3 is two pages — that's the core of Q2. | ~25 min |
+| Robertson & Zaragoza, *The Probabilistic Relevance Framework: BM25 and Beyond* (2009), §1–2 | Where BM25 comes from — that it's a *probabilistic* model of relevance, not a hand-tuned heuristic that happens to work. Read for the intuition, not the derivations. | ~20 min |
+
+Concepts taught before this reading was issued (analogy → technical definition → check):
+term frequency saturation, inverse document frequency, document-length normalisation,
+`k1`/`b`, and the retrieval-vs-re-ranking distinction restated in BM25 terms.
+
+**Comprehension check (2026-08-24), three questions.** Right conclusions, wrong
+mechanisms twice — both corrected with worked arithmetic before any code was written:
+
+- **IDF cannot explain why one *document* outranks another.** Its formula contains only
+  `N` and `n(t)` — corpus and term, no `D` at all — so for a given query term it is one
+  constant multiplying every document's score equally. IDF differentiates between
+  *terms*, not between documents. What separated the two documents in the question was
+  the length bracket: three mentions in 12 tokens scores 1.72, three in 60 tokens scores
+  1.10 (`avgdl`=20, `k1`=1.5, `b`=0.75) — same numerator, all the difference in the
+  denominator.
+- **`k1 = 0` deletes length normalisation as well as saturation.** The whole length
+  bracket is multiplied by `k1`, so zeroing it makes `b` unreachable. The score collapses
+  to `sum of IDF(t)` over query terms present: length-blind and repetition-blind, not
+  "shorter documents win".
+- **BM25 does not take a log of term frequency — that's TF-IDF.** BM25 damps repetition
+  with a saturating rational function `f(k1+1)/(f + k1*...)`, which has a hard ceiling of
+  `k1+1`; a log grows forever, just slowly. The only logarithm in BM25 is in IDF. Worked:
+  3x the mentions buys 1.44x, and infinite mentions would buy only 1.84x.
+- The third question (why a 300-title query retrieves worse than a 10-title one) was not
+  attempted, and is not derivable from the formula — which was the point of asking. Taught
+  instead: **BM25 contains no time term of any kind**, so topic drift cannot be tuned
+  away and must be handled in query construction or not at all. This became D12.
+
+**CSR/CSC re-taught from scratch on request (2026-08-24)**, worked by hand on constructed
+corpora rather than described. The second attempt got the row structure and the empty-row
+case right; the correction was that `data[p]` pairs with `indices[p]` **by tape
+position**, not with the vocabulary in alphabetical order. Three arrays, three jobs:
+`data` = what, `indices` = which column, `indptr` = which row. Points to remember:
+- `indptr` holds **positions into `data`/`indices`**, never column numbers, and has one
+  more entry than there are rows — n regions need n+1 boundaries.
+- Document numbers repeat freely across `indices`; each term's run is an independent list.
+- `indptr[j+1] - indptr[j]` is the posting-list length, which **is** `n(t)`, which feeds
+  IDF — the data structure and the formula describing the same thing from two directions.
+
+---
+
 ## Phase 1 — Unified schema
 
 Required reading for this concept was done directly against ground truth rather than
