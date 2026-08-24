@@ -230,11 +230,12 @@ explicitly if Q2 runs past its 4h budget, don't let it slide silently either way
 
 - [x] **Register on Codabench, MIND competition** — done 2026-08-21
 - [x] **Register on Codabench, RecSys 2024 / EB-NeRD** — done 2026-08-21
-- [ ] **Download the large test bundles** — raised 2026-08-24. `ebnerd_testset.zip` and
-      `MINDlarge_test.zip` are *required* for Q5 and are several GB each; Phase 5 cannot
-      start without them and is the real deadline risk. Verify each finished file's byte
-      count against the server's `Content-Length` — a `wget` exit code of 0 is not a
-      reliable success signal (see the truncated `ebnerd_demo.zip` in the error log).
+- [x] **Download the large test bundles** — done 2026-08-24, and **verified complete**,
+      not just present (the truncated-`ebnerd_demo.zip` lesson): MIND test's last line
+      carries all 5 fields with `impression_id` 2,370,727 exactly equal to its line count
+      and the file ends in a newline; every EB-NeRD parquet reports a row count, which a
+      truncated file could not do since the schema and footer live at the *end*. Counts
+      match the spec exactly (13,536,710 EB-NeRD test impressions; 2,370,727 MIND).
 - [ ] **Accept the GitHub Classroom assignment** — **blocked: invite link not yet found
       on Moodle.** Chaitanya checked and couldn't locate it as of 2026-08-21. Does not
       block Phase 1 (local pipeline work needs no remote). Only affects where this repo
@@ -260,10 +261,14 @@ just insurance until that's found.
 | Dataset | Bundle | Path | Status |
 |---|---|---|---|
 | MIND | small (train + dev) | `data/raw/mind/MINDsmall_{train,dev}/` | ✅ downloaded, row counts verified against provided notebook (51,282 / 156,965 train; 42,416 / 73,152 dev) |
-| MIND | large test | `data/raw/mind/` | ⬜ not downloaded (needed only for Codabench submission, Phase 5) |
+| MIND | large test | `data/raw/mind/MINDlarge_test/` | ✅ downloaded 2026-08-24, verified complete — 2,370,727 behaviors (spec: 2.37M), 120,961 news, unlabeled as expected. 1.5 GB |
 | EB-NeRD | demo | `data/raw/ebnerd/ebnerd_demo/` | ✅ downloaded, valid parquet confirmed (11,777 articles, 24,724 train behaviors, 1,590 train history rows — a different, smaller bundle than the "large" one the provided notebook explored, so these counts are expected to differ) |
-| EB-NeRD | small | `data/raw/ebnerd/` | ⬜ not downloaded |
-| EB-NeRD | large + testset | cloud only (too big for 7 GB RAM local) | ⬜ not downloaded |
+| EB-NeRD | small | `data/raw/ebnerd/` | ⬜ not downloaded (not needed — demo for dev, large for the leaderboard) |
+| EB-NeRD | large | `data/raw/ebnerd/ebnerd_large/` | ✅ downloaded 2026-08-24, verified — 12,063,890 train + 12,566,385 validation behaviors, 125,541 articles. 3.4 GB. Schema identical to demo. |
+| EB-NeRD | testset | `data/raw/ebnerd/ebnerd_testset/ebnerd_testset/` (note the **doubled** directory name, from the zip's own layout) | ✅ downloaded 2026-08-24, verified — 13,536,710 test behaviors (spec: 13.5M). 1.8 GB. Schema differs from demo — see the Phase 5 landmines under Open questions. |
+
+Disk after these: 6.8 GB of raw data, 901 GB free — not a constraint. The `__MACOSX/`
+and `DS_Store` entries inside both EB-NeRD bundles are zip packaging junk; ignore them.
 
 **Environment:** `.venv/` created (Python 3.12.3, standard `venv`), dependencies pinned
 in `requirements.txt` (`polars==1.43.2`, `pyarrow==25.0.1` — see D4 in `ARCHITECTURE.md`).
@@ -275,6 +280,30 @@ Rebuild with `python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 
 - Cloud platform for large-scale runs (Kaggle vs Colab vs Lightning AI) — **deliberately
   deferred to Phase 5**, to be decided against real measured memory numbers.
+
+### Phase 5 landmines found early (2026-08-24, while verifying the large downloads)
+
+Neither is a bug now; both will bite in Phase 5 and are cheaper to know about than to
+rediscover under deadline. Not fixed yet — Phase 5 work, logged so it isn't re-derived.
+
+1. **EB-NeRD's test set has no `article_ids_clicked` column at all**, and
+   `ingest_ebnerd.load_behaviors` selects it unconditionally. It will raise
+   `ColumnNotFoundError` on the test bundle. Also absent: `article_id` (the D6 context
+   field we already drop), `next_read_time`, `next_scroll_percentage`. Fails loudly,
+   which is the good failure mode. **`ebnerd_large`'s schema is byte-identical to demo's**
+   (same columns, same dtypes, articles too), so only the *testset* path needs the change.
+2. **MIND's test set has no `-0`/`-1` click suffixes** — impression tokens are bare
+   `N<digits>` (verified: 0 non-matching of 7,836,608 tokens sampled). `load_behaviors`
+   degrades *correctly but silently* here: the `-[01]$` strip becomes a no-op so
+   candidates are right, and the `-1` filter yields an empty clicked list for every row,
+   which is exactly what D3's schema specifies for unlabeled test rows. Worth an explicit
+   assertion in Phase 5 rather than relying on the coincidence.
+3. **EB-NeRD test carries a new `is_beyond_accuracy` flag**: 200,000 rows true,
+   13,336,710 false. That is the RecSys 2024 challenge's separately-scored
+   beyond-accuracy subset — it affects the submission format, so check the Codabench
+   rules before generating predictions.
+4. MIND test history is 2,453 empty-history rows per 200,000 sampled (~1.2% cold-start,
+   comparable to MIND-small's 2.8% in val).
 
 ---
 
