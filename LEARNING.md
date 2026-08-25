@@ -331,3 +331,42 @@ measured cause is that 86.9% of val candidates were never clicked in train, so s
 train popularity is a staleness marker. **A number moving the wrong way is a finding when
 you can name the mechanism, and a bug when you cannot** — the direction alone does not
 distinguish them.
+
+---
+
+## Phase 4 — Q4.3, beyond-accuracy metrics
+
+**Taught in chat:** newsagent-rack analogy → ASCII formulas for intra-list diversity,
+novelty and coverage → comprehension check. Motivated by a failure already in hand rather
+than a hypothetical: Phase 3's Finding 4, where semantic retrieval returned five Popeyes
+chicken-sandwich articles to a user who read three political stories, and every accuracy
+metric would have called that a good list.
+
+**Comprehension check — 2 of 3 parts right, 1 corrected; second question solid.**
+
+**Q1 (a degenerate system: the single most-clicked article, repeated).** ILD = 0 ✓ and
+coverage ≈ 0 ✓ (precisely 1/65,238 = 0.0015%). **Novelty was answered as 1 and is not.**
+The direction was right — it is the *minimum* achievable — but the minimum is **5.78 on
+MIND's real train counts** (6.13 after smoothing), not 0 or 1, because `p` is the article's
+share of *all* clicks and in a 65,238-article corpus even a runaway hit takes 1.8% of them.
+
+The generalisation, which is the part that matters:
+> **Diversity and coverage are bounded in [0, 1] and can be read absolutely. Novelty is
+> unbounded, and its scale is a property of the corpus.** MIND's range is 6.13–18.20 and
+> EB-NeRD's is 8.01–15.16, so a raw novelty figure means nothing alone and **the two
+> datasets' novelty numbers are not comparable to each other.**
+
+Same trap as AUC's sensitivity to candidate-list length in Q4.1 — a metric that looks
+absolute while silently carrying the dataset's scale. Second instance in one phase, so it
+is a pattern rather than a coincidence, and worth a line in the design note.
+
+**Q2 (semantic scoring 0.15 category-ILD against BM25's 0.55).** Answered correctly:
+semantic traded topical range for cosine proximity, and that is bad in cases like this one
+but not always. Two sharpenings added:
+- On the *category* basis, 0.15 means **85% of all pairs share a category** — not "less
+  variety within a topic" but a collapse to essentially one topic.
+- Pushing "not always worse" to its conclusion: **a purely random recommender scores best
+  on all three beyond-accuracy metrics.** So read alone they do not merely fail to rank
+  systems, they rank the worst one first. They price what a method *gave up*, and only
+  mean something read against the accuracy table — which is why D24's random arm is run
+  through this module too.
