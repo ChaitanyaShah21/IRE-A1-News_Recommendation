@@ -25,8 +25,9 @@ Headline finding below.
 **Phase 4 — Q4 evaluation harness: in progress.** Q4.1 (metrics) and Q4.2 (the
 re-ranking runner, four scorers, both datasets) are done and mutation-tested; 123 tests
 passing.
-Q4.3 (beyond-accuracy, both diversity bases, retrieval + re-ranking) is done too; 146
-tests passing. Next are the slices, then Q4.4's bootstrap CIs, then Q9.
+Q4.3 (beyond-accuracy, slices) and Q4.4 (bootstrap CIs) are done too; 177 tests passing.
+**All of Q4 is complete.** Next and last in this phase: Q9's ablation and
+`tests/test_no_leakage.py`.
 
 **Phase 3 — Q3 semantic retrieval: complete**, tagged `phase-3-complete`. All five
 sub-requirements done: 77,015 article embeddings computed and stored (Q3.1), exact
@@ -462,8 +463,79 @@ content-based retrieval as such.
 4. **Fork A demonstrated, not argued.** On re-ranking, four completely different scorers
    land within 0.4 points of each other on EB-NeRD coverage (17.75–18.17%). On retrieval
    the same four span 0.02%–99.96%.
+- [x] **D26** — slice definitions. **Cold start:** absolute `history_len <= 5` (MIND 17.7%
+      of val impressions, EB-NeRD **0.3%** — 55 of them), not a per-dataset quantile, because
+      cold start is an absolute property and EB-NeRD having no cold users is a *finding*.
+      **Head/tail:** two definitions, because the textbook one is degenerate — train
+      popularity leaves **~98% of val clicks in the tail on both datasets**, so
+      exposure-based head (articles filling 50% of val impression slots, counted from
+      what was **shown**, never from clicks) is the working slice and train-popularity is
+      reported to show its degeneracy. Multi-click impressions straddling the boundary go
+      to neither slice and are counted (MIND 7,209 = 14.5%, EB-NeRD 20).
+- [x] **D27** — **coverage is reported without a bootstrap CI**, and this was a real bug
+      caught by running it: every coverage interval sat *entirely below its own point
+      estimate*. Root cause is the statistic, not the code — a resample holds only **63.2%**
+      distinct items (measured at n = 1,562 / 17,749 / 50,000, all 63.2%), which is harmless
+      for a **mean** but fatal for a **union**, where a duplicate adds nothing and every
+      resample can only lose articles. Point estimate reported with the reason; raw spread
+      and the pivotal correction kept in the CSV under explicit names.
+      **Test-debt lesson worth more than the fix:** an existing test already asserted this
+      exact downward shift *and treated it as correct*. The assertion was true; the missing
+      step was inferring that it invalidates the interval. A test can pin a real property
+      and still let a wrong conclusion through.
+- [x] **Q4.3 slices + Q4.4 bootstrap done** — `src/newsrec/eval/slices.py`,
+      `src/newsrec/eval/bootstrap.py`, `scripts/run_eval_report.py`, plus CIs added to
+      `run_beyond_accuracy.py`. **31 new adversarial tests, 177 passing overall.**
+      Mutation-tested: **8 bugs reintroduced, all 8 caught.** The bootstrap suite includes
+      a **calibration** test (does the interval cover a known truth ~95% of the time),
+      which is the only test that distinguishes a real bootstrap from a machine that
+      returns confident-looking numbers. Results in `reports/eval_report_{mind,ebnerd}_val.csv`
+      and `reports/beyond_accuracy_mind-ebnerd_val_k10.csv`.
+
+**Five findings (13–17), written up in full in `ARCHITECTURE.md`:**
+1. **The CIs turn Findings 6 and 7 into claims.** EB-NeRD BM25 AUC 0.4966 **[0.4917,
+   0.5009] — the interval contains 0.5**, so chance cannot be rejected. Popularity's
+   [0.4629, 0.4666] lies entirely *below* 0.5. Semantic's excludes both.
+2. **The method ranking flips between slices — the whole point of slicing.** On MIND
+   cold-start users **popularity beats BM25** (0.5542 vs 0.5296, non-overlapping CIs); on
+   warm users the order reverses (0.5526 vs 0.5402, also non-overlapping). With ≤5 history
+   articles BM25's query is too thin to beat "what is everyone reading". Popularity is the
+   only method that scores *higher* cold than warm. Retrospective justification for D17's
+   rejected popularity fallback: right product call, wrong measurement call — it would have
+   hidden this crossover inside one blended number.
+3. **Semantic degrades least under cold start** and leads in both slices.
+4. **MRR halves on rarely-shown articles for every method including random**, while AUC
+   barely moves and BM25's even rises. The slice is structurally harder, not the methods
+   failing — having both metrics on the same slice is what prevents the misreading.
+5. **A slice defined by a quantity a method scores on grades that method tautologically.**
+   Popularity scores AUC **0.9737** on the train-popularity head slice against 0.5423
+   overall. Same shape as measuring semantic's diversity in the space it optimises (D25).
+   Two instances in one phase, so it is a rule for the design note.
 
 ## Next step
+
+**Q9 — the anti-gaming ablation and `tests/test_no_leakage.py`.** Everything Q4 requires
+is now built and run.
+
+`tests/test_no_leakage.py` must assert, at minimum:
+1. **D19's strict inequality** — `first_seen < T`, never `<=`.
+2. **Label-free derivation** — `first_seen` and slice exposure come from
+   `candidate_article_ids`, never `clicked_article_ids`.
+3. **The temporal split invariant** — `train_max < val_min <= val_max < test_min`.
+4. **Popularity is counted over train only** — `train_click_counts` already raises, so the
+   test pins that it still does.
+5. **The EB-NeRD history landmine** — val-split history contains **99.52%** of train-window
+   clicks (22,143/22,249). Harmless as used; catastrophic if val history were ever pointed
+   at train impressions. `history.parquet` holds all three snapshots keyed by `split`, and
+   1,217 EB-NeRD users have all three rows, so a join on `user_id` alone silently attaches
+   the wrong one and **nothing errors**.
+
+**Q9's ablation** has its arm already measured and waiting: "has the user already read this
+candidate" is a serving-time feature, clicked **3.5× more** often than average on MIND and
+**0.49×** on EB-NeRD — opposite directions, both outside noise, already leak-checked.
+
+<details>
+<summary>Superseded slices/bootstrap next-step note</summary>
 
 **Q4.3 (remainder) — slices**, then **Q4.4 bootstrap 95% CIs**, then **Q9**.
 
@@ -477,6 +549,8 @@ per-list coverages is not the coverage of the union (there is a test pinning exa
 
 **Remaining in Phase 4:** slices · bootstrap 95% CIs · Q9 ablation +
 `tests/test_no_leakage.py`.
+
+</details>
 
 <details>
 <summary>Superseded Q4.3 next-step note</summary>

@@ -63,6 +63,12 @@ Chaitanya's `/model` choice) — noted per-commit in git history, not tracked he
 | `scripts/run_beyond_accuracy.py` | AI-generated | Thin entry point for Q4.3; runs both the retrieval and re-ranking outputs so D25's candidate-pool cap is shown rather than asserted |
 | `reports/beyond_accuracy_*.csv` | Generated output | Not authored; reproducible via the script above |
 
+| `src/newsrec/eval/slices.py` | AI-generated, human-decided | Q4.3 slicing. D26's two definitions chosen by Chaitanya against measured distributions; the exposure-from-candidates-never-clicks rule follows his D19 reasoning |
+| `src/newsrec/eval/bootstrap.py` | AI-generated, human-decided | Q4.4. D27 (coverage reported without a CI) decided by Chaitanya after asking for the bias to be explained in plain terms and for the A-vs-B trade-off, which is what surfaced that option B does not remove the need for the explanation |
+| `tests/test_bootstrap.py` | AI-generated | R10 adversarial suite, 31 tests covering both modules, including a calibration test. Mutation-tested: 8 bugs reintroduced, all 8 caught |
+| `scripts/run_eval_report.py` | AI-generated | Thin entry point for Q4.3 slices + Q4.4 CIs over the re-ranking metrics |
+| `reports/eval_report_*.csv` | Generated output | Not authored; reproducible via the script above |
+
 _Appended as files are created._
 
 ## Prompt log
