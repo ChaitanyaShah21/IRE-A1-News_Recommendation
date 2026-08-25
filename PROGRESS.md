@@ -1,6 +1,6 @@
 # Progress
 
-**Read this first in every session.** Last updated: 2026-08-21
+**Read this first in every session.** Last updated: 2026-08-25
 
 ---
 
@@ -18,9 +18,13 @@ store, and a one-command rebuild that's been run down both its success and failu
 paths (including a real path-resolution bug found and fixed after Chaitanya questioned
 whether it actually worked "from anywhere" — see error log).
 
-**Phase 2 — Q2 BM25.** Not yet started content-wise. The Phase 1→2 recall quiz is
-already done (3/3, see `LEARNING.md`) — the next session should go straight to teaching
-BM25, not repeat it.
+**Phase 2 — Q2 BM25: complete**, tagged `phase-2-complete`. Inverted index, query side,
+recall@K for K ∈ {50, 100, 200}, both datasets, both candidate pools, 38/38 tests passing.
+Headline finding below.
+
+**Phase 3 — Q3 semantic retrieval: in progress.** Concepts taught, D20 (model) and D21
+(brute-force search) taken, environment installed and verified CUDA-free. The Phase 2→3
+recall quiz is done — **do not repeat it**. Next is Q3.1, embedding the articles.
 
 ---
 
@@ -59,14 +63,25 @@ Deadline **27 Aug 2026**. Budget ~20 focused hours across 6 days.
 | 0 | Orientation & scaffolding | 1.5 h | ✅ done — tagged `phase-0-complete` |
 | 1 | Q1 — reproducible data pipeline | 4 h | ✅ done — tagged `phase-1-complete` (ran well over budget, see note below) |
 | 2 | Q2 — BM25 lexical retrieval | 4 h | ✅ done — tagged `phase-2-complete`. Ran over budget: Chaitanya chose D19's availability variant knowing it would, and it produced the phase's main finding |
-| 3 | Q3 — semantic retrieval (embeddings) | 3.5 h | ⬜ not started |
+| 3 | Q3 — semantic retrieval (embeddings) | 3.5 h | 🟡 in progress — concepts taught, D20/D21 taken, environment installed |
 | 4 | Q4 — evaluation harness + Q9 (folded in, no separate budget line) | 4 h | ⬜ not started |
 | 5 | Q5 — scale-up & Codabench submission | 2.5 h | ⬜ not started |
 | 6 | Q6/Q7 — design note & deliverables | 2 h | ⬜ not started |
 
-Total ≈ 21.5 h against ~20 h. **Designated drop-first if we slip:** computing our own
-embeddings in Phase 3 (use EB-NeRD's provided ones instead), and the extra ablations
-in Phase 4 beyond what Q9 requires.
+Total ≈ 21.5 h against ~20 h.
+
+**Designated drop-first if we slip — revised 2026-08-25.** The original list said
+"computing our own embeddings in Phase 3 (use EB-NeRD's provided ones instead)". **That
+option does not exist** — neither dataset ships loadable article-text embeddings (see D20;
+MIND ships knowledge-graph *entity* vectors, EB-NeRD's article vectors are separate
+optional downloads we don't have). It has been removed rather than left as a phantom
+escape hatch. The current list, in the order they'd go:
+
+1. Extra ablations in Phase 4 beyond what Q9 strictly requires.
+2. The `b` parameter sweep from D13 (never run; BM25 headline numbers use the defaults).
+3. Phase 3's N sweep — reuse D12's N = 10 without re-tuning it for embeddings.
+4. **Not droppable:** both candidate pools in Phase 3. D19 makes this structural — drop
+   it and Q3.5 compares pool sizes instead of methods.
 
 ---
 
@@ -228,10 +243,51 @@ reporting it without the baseline column would have been materially misleading.
 - [x] Phase 2→3 recall quiz done 2026-08-25 (2 of 3 solid, one re-taught — see
       `LEARNING.md`). **A new session does not need to repeat it.**
 
+### Phase 3 (in progress)
+- [x] **R1 amended 2026-08-25 at Chaitanya's request:** required reading dropped for the
+      rest of the assignment; concepts taught in chat, plain-language then technical.
+      `CLAUDE.md` + `PROMPT.md` updated and re-synced. `LEARNING.md` keeps its
+      comprehension-check record, which is the part that matters.
+- [x] **Pacing (R8):** with 2 days left and 12 h of budget across Phases 3–6, Chaitanya
+      chose path **(b)** — full options-and-trade-offs treatment for forks that change the
+      answer (model, user representation, candidate pool), stated defaults elsewhere.
+      Phase 5 (cloud + Codabench) is the real deadline risk, not teaching depth.
+- [x] Embeddings and ANN (Approximate Nearest Neighbour) taught. Comprehension check:
+      **1 of 3 solid, 1 sharpened, 1 re-taught** — see `LEARNING.md`. The re-taught one
+      matters for the code: D15's history exclusion applies **more** strongly to
+      embeddings than to BM25, because the mean-pooled user vector is provably the point
+      of maximum average similarity to the user's own history articles.
+- [x] **D20** — compute our own embeddings, one multilingual model for both datasets:
+      `paraphrase-multilingual-MiniLM-L12-v2` (384-dim, `model_type: "bert"`, Danish
+      verified present in its language list). Two facts were verified rather than assumed
+      before deciding: `distiluse-base-multilingual-cased-v1` has **no Danish** despite
+      looking like the cheapest multilingual option, and the download speed the original
+      recommendation rested on was **stale by ~100×** (measured 6.1 MB/s PyPI /
+      2.8 MB/s HuggingFace, not the remembered 60 KB/s) — which inverted the
+      recommendation from ONNX Runtime to sentence-transformers.
+- [x] Environment installed: `torch==2.13.0+cpu` + `sentence-transformers==6.0.0`,
+      **0 CUDA packages**. `requirements.txt` carries the PyTorch CPU index above the
+      torch pin; verified by a from-scratch resolution (46 packages, 0 CUDA, torch from
+      PyTorch's CDN and the other 45 from PyPI). Without those two lines a rebuild pulls
+      2,894 MB instead of ~390 MB, 2,238 MB of it unusable on a GPU-less machine.
+- [x] **D21** — exact brute-force nearest-neighbour search (Q3.2 permits it explicitly),
+      batched, reusing `bm25_search.py`'s pattern. `SCALE_NOTES.md` entry added for the
+      10× crossover where a real ANN index stops being optional.
+
 ## Next step
 
-**Phase 3 — Q3, semantic retrieval (embeddings).** Teach embeddings and approximate
-nearest neighbour search per R1 before any code, then take the model decision.
+**Q3.1 — embed the articles.** Download the model, smoke-test it on a handful of real
+MIND and EB-NeRD titles (including Danish, to confirm empirically that the two languages
+land in sensible relative positions), then decide where the vectors live — the D3
+sub-decision deferred since Phase 1: a column on `articles.parquet`, or a separate
+`embeddings.npy` + id index. **That is a genuine fork and gets presented, not assumed.**
+
+Then Q3.3's user representation, reusing D12's N = 10 so Q3.5 compares methods rather
+than query lengths.
+
+**Unmeasured cost to establish early:** CPU-only inference over 77,015 articles. Nothing
+in the plan depends on it being fast, but Phase 5 does, so measure it on a sample and
+extrapolate before embedding the whole corpus.
 
 **⚠️ The old "drop-first" plan is retired — it rested on a false premise.** Phase 0 said
 we could fall back to "EB-NeRD's provided embeddings instead of computing our own."

@@ -1,6 +1,3 @@
-<!-- Portable copy of CLAUDE.md. Paste into any chat tool that does not auto-load CLAUDE.md. -->
-<!-- Keep in sync: this file and CLAUDE.md must stay identical below this line. -->
-
 # Operating Contract — IRE Assignment 1
 
 This file loads automatically into every Claude Code session in this folder.
@@ -34,11 +31,22 @@ Every new concept is introduced in exactly this sequence, and code appears only 
    a shopping queue. Something with physical objects in it.
 2. **Technical definition.** The precise meaning, in full sentences. Formulas broken
    into named parts, each part explained separately before assembling.
-3. **Required reading.** 2–4 specific sources with what to take from each, and a rough
-   reading time. Logged in `LEARNING.md`.
-4. **Comprehension check.** A question or two. Wait for the answer before proceeding.
+3. **Comprehension check.** A question or two. Wait for the answer before proceeding.
 
 Only then: the code.
+
+**Amendment, 2026-08-25 (Chaitanya's call, deadline pressure).** Step 3 used to be
+**Required reading** — 2–4 external sources with a reading time. It is **dropped**. With
+two days left, external reading is the part of the loop that competes directly with the
+work, and it is the only part no rubric grades. Concepts are now taught **in chat**:
+plain-language explanation first, then built up to the technical statement, then the
+comprehension check.
+
+What this does **not** change: `LEARNING.md` still records every concept taught, every
+recall-check answer, and everything that needed re-teaching — that record is what makes a
+later session cheap and what the design note draws on. What it costs: less depth than a
+primary source gives, and no external reference to cite. Reversible if the schedule frees
+up, which it will not.
 
 ### R2 — Never use a short form without expanding it
 Expand **every** abbreviation, acronym, and initialism on **first use in every session** —
@@ -178,7 +186,7 @@ Not at the end of the phase — the end of every **step**. Files and their jobs:
 | `ARCHITECTURE.md` | Current system design + **decision log**: every choice, alternatives rejected, and why. Feeds the design note directly. |
 | `PROGRESS.md` | Done / in progress / next / open questions / where the data lives / **error log**. |
 | `GLOSSARY.md` | Every term, defined once in plain language then technically. Grows continuously. |
-| `LEARNING.md` | Required reading per concept, with what to take from each source. |
+| `LEARNING.md` | What was taught per concept, every recall-check answer, and anything re-taught. (Was "required reading per concept" until R1's 2026-08-25 amendment dropped external reading.) |
 | `SCALE_NOTES.md` | "Where this breaks at 10×" observations, captured as they occur. |
 | `AI_USAGE.md` | Prompt log and authorship marking — a graded deliverable (Q7.4). |
 

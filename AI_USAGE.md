@@ -37,6 +37,8 @@ Chaitanya's `/model` choice) — noted per-commit in git history, not tracked he
 | `scripts/run_bm25_recall.py` | AI-generated | Thin entry point for Q2.4 |
 | `scripts/summarise_bm25_recall.py` | AI-generated | Adds the random-baseline column without which the D19 comparison misleads |
 | `reports/bm25_recall_*.csv` | Generated output | Not authored; reproducible via the two scripts above |
+| `requirements.txt` (Phase 3 additions) | AI-generated, human-decided | D20's route chosen by Chaitanya, who asked the question that settled it — whether using a library here conflicts with the assignment. The CPU-index lines exist because the naive install was *measured* at 2,894 MB, 2,238 MB of it unusable CUDA |
+| `CLAUDE.md` / `PROMPT.md` (R1 amendment) | AI-written, human-directed | Chaitanya directed the change: drop required reading, teach in chat plain-to-technical. Rationale and stated cost written by Claude |
 
 _Appended as files are created._
 

@@ -1,7 +1,67 @@
-# Required Reading
+# Learning Log
 
-One section per concept, added before the concept is used in code.
-Each entry says what to take from the source, so you can stop reading once you have it.
+One section per concept, added before the concept is used in code, plus every
+comprehension-check answer and anything that needed re-teaching.
+
+**Scope change, 2026-08-25 (R1 amendment).** Up to Phase 2 this file was "Required
+Reading" — external sources with what to take from each. With two days to the deadline
+Chaitanya dropped external reading; concepts are now taught in chat, plain-language first
+and then built up to the technical statement. Earlier sections are kept as written.
+The comprehension-check record continues unchanged — it is the part that matters.
+
+---
+
+## Phase 3 — Embeddings and nearest-neighbour search (2026-08-25)
+
+**Taught in chat** (no external reading, per the amendment above): the warehouse analogy
+— articles placed by position rather than filed by word, so synonyms sit on adjacent
+shelves for free but exact rare terms have no drawer to look in; embeddings as a
+fixed-length vector of real numbers; cosine similarity broken into dot product, norm, and
+the division that strips magnitude out; L2 normalisation collapsing cosine into a plain
+dot product so ranking becomes one matrix product; mean pooling as the user
+representation Q3.3 asks for; ANN (Approximate Nearest Neighbour) as the aisle-signs
+trade of exactness for speed.
+
+**Comprehension check — 2 of 3 needed work.**
+
+**Q1 (normalisation) — right, sharpened.** Answer correctly had "denominator becomes 1".
+The imprecise half was *what* gets promoted without normalisation. Sharpened: write
+`u·a = cos(u,a) × ‖u‖ × ‖a‖`. When ranking all articles for **one** user, `‖u‖` is the
+same constant in every score, so it cannot reorder anything — **only the article norms
+`‖a‖` distort the ranking**. Ranking by raw dot product is ranking by `cosine × ‖a‖`.
+Second point added: the bias is *systematic*, promoting the same high-norm articles into
+every user's top-K, which would surface in Q4's coverage and intra-list-diversity metrics
+as a fake "lacks diversity" finding.
+
+**Q2 (does D15's exclusion argument still apply?) — answered "less strongly", the answer
+is MORE strongly. Re-taught.** The reasoning given — "embeddings are approximations, not
+exact matches" — is true of embedding matching in general but misses that the user vector
+is not an approximation *of* the history articles, it is **built out of them**. Exact
+argument: maximising `Σᵢ cos(u, aᵢ)` over unit `u` gives `u ∝ Σᵢ aᵢ`, i.e. the normalised
+mean. So **the mean-pooled user vector is precisely the point in the whole space with the
+highest average similarity to that user's own history**. The self-match falls out of the
+arithmetic. With BM25 it was merely emergent — a bag of words from those titles, which
+another article sharing a rare high-IDF term can genuinely outrank. D15 therefore carries
+*more* weight in Q3 than it did in Q2, at unchanged measured cost (0.19% MIND / 0.47%
+EB-NeRD of ground-truth clicks).
+
+**Q3 (English-only model on Danish) — first half right, second half not attempted.**
+Mechanism sharpened: it would not refuse the text. An English tokeniser fragments Danish
+into subwords and returns 384 well-formed numbers with sensible norms and no warning —
+confident nonsense. The unanswered half is the one that matters: **why silent degradation
+beats a crash in danger.** Because the number still looks like a number. EB-NeRD semantic
+recall@200 would land somewhere plausible next to BM25's genuine 2.45%, and we would write
+*"semantic underperforms lexical on Danish"* — reading as a **finding about methods** when
+it is a **bug in our setup**, corrupting Q3.5 specifically. A crash costs an hour; a wrong
+number gets submitted.
+
+**This is now a three-time pattern worth naming in the design note**, not three anecdotes:
+D11 rejected per-language stemming because divergent processing would poison the
+cross-dataset comparison; D19's random-baseline column caught EB-NeRD's "3× improvement"
+that was really a shrinking pool; and here. **And it was not hypothetical** — the
+smallest, fastest-looking multilingual model on the menu,
+`distiluse-base-multilingual-cased-v1`, turned out to have no Danish in its language list.
+The trap was in the menu.
 
 ---
 
