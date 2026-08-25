@@ -274,7 +274,45 @@ reporting it without the baseline column would have been materially misleading.
       batched, reusing `bm25_search.py`'s pattern. `SCALE_NOTES.md` entry added for the
       10× crossover where a real ANN index stops being optional.
 
+- [x] **D22** — embeddings get their own `data/processed/embeddings.parquet`, vector beside
+      its own `article_id` so misalignment is impossible by construction. Deliberately
+      **not** folded into `build_pipeline.py`: that script rewrites `articles.parquet`
+      every run, so vectors stored there would be recomputed (2.81 s → ~13 min) or
+      destroyed each time.
+- [x] **Q3.1 done** — `src/newsrec/retrieval/semantic.py` + `scripts/build_embeddings.py`.
+      **15 new adversarial tests, 53 passing overall.** Two real bugs prevented before
+      they ran, both instances of the same Phase 1 null trap wearing different clothes:
+      `pl.concat_str` propagates null, which would have blanked **3,415 MIND** articles'
+      text; and EB-NeRD encodes a missing abstract as `""` rather than null, so **803**
+      articles would slip past a null-only guard.
+- [x] **Real artifact built and verified:** 77,015 vectors (65,238 MIND + 11,777 EB-NeRD)
+      in **13.3 min at 96 articles/s**, 110 MB, loading in **0.6 s** as a C-contiguous
+      float32 (77015, 384) matrix. Norms exactly 1.000000. **ID order matches
+      `articles.parquet` exactly.** Nearest-neighbour inspection coherent in both
+      languages. Peak RSS during the build 1.69 GB — flat in corpus size, since
+      `model.encode` streams in batches of 64.
+
 ## Next step
+
+**Q3.3 — the user representation.** Mean-pool the embeddings of each user's last 10
+clicked articles (mirroring D12's N and field choice so Q3.5 varies only the algorithm),
+then brute-force top-K per D21 under **both** candidate pools per D19. `bm25_search.py`
+already has the batching, per-unique-user scoring, and availability-bucket machinery —
+reuse it rather than rebuilding it.
+
+**Carry into that code:** every article is its own nearest neighbour at cosine exactly
+1.000 (verified), and the mean-pooled user vector is provably the point of maximum average
+similarity to the user's own history — so **D15's exclusion must be applied before top-K,
+not after**, or the top slots fill with articles the user has already read.
+
+**Cold-start (D17) needs re-checking, not assuming.** For BM25 an empty history gave an
+empty query and an all-zero score vector. Here it would give a mean over *zero* vectors —
+a division by zero producing NaN, which propagates silently through argsort rather than
+scoring 0. Affects the same 1,556 MIND val impressions and 0 EB-NeRD ones. Must be
+handled explicitly and tested.
+
+<details>
+<summary>Superseded Q3.1 next-step note</summary>
 
 **Q3.1 — embed the articles.** Download the model, smoke-test it on a handful of real
 MIND and EB-NeRD titles (including Danish, to confirm empirically that the two languages
@@ -288,6 +326,10 @@ than query lengths.
 **Unmeasured cost to establish early:** CPU-only inference over 77,015 articles. Nothing
 in the plan depends on it being fast, but Phase 5 does, so measure it on a sample and
 extrapolate before embedding the whole corpus.
+
+</details>
+
+_(All of the above is now done — the probe measured 87 articles/s, the real run hit 96.)_
 
 **⚠️ The old "drop-first" plan is retired — it rested on a false premise.** Phase 0 said
 we could fall back to "EB-NeRD's provided embeddings instead of computing our own."

@@ -38,6 +38,10 @@ Chaitanya's `/model` choice) — noted per-commit in git history, not tracked he
 | `scripts/summarise_bm25_recall.py` | AI-generated | Adds the random-baseline column without which the D19 comparison misleads |
 | `reports/bm25_recall_*.csv` | Generated output | Not authored; reproducible via the two scripts above |
 | `requirements.txt` (Phase 3 additions) | AI-generated, human-decided | D20's route chosen by Chaitanya, who asked the question that settled it — whether using a library here conflicts with the assignment. The CPU-index lines exist because the naive install was *measured* at 2,894 MB, 2,238 MB of it unusable CUDA |
+| `src/newsrec/retrieval/semantic.py` | AI-generated, human-decided | Model, search method and storage layout (D20, D21, D22) chosen by Chaitanya; the library-vs-implement question was raised by him and the compliance argument in D20 exists because he asked it |
+| `tests/test_semantic_embeddings.py` | AI-generated | R10 adversarial suite, 15 tests. The two null-representation cases (MIND null vs EB-NeRD blank) were found by checking the real store before writing the code, not after a traceback |
+| `scripts/build_embeddings.py` | AI-generated | Thin entry point for Q3.1; kept out of build_pipeline.py per D22 |
+| `data/processed/embeddings.parquet` | Generated output | Not authored; reproducible via the script above. Gitignored |
 | `CLAUDE.md` / `PROMPT.md` (R1 amendment) | AI-written, human-directed | Chaitanya directed the change: drop required reading, teach in chat plain-to-technical. Rationale and stated cost written by Claude |
 
 _Appended as files are created._
