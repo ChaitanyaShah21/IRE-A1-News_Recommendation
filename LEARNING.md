@@ -252,3 +252,46 @@ scratch. Confirmed structural facts to remember:
   behaviors files get explored without exhausting RAM.
 - The unified schema is a **superset**: dataset-unique columns (sentiment, body text,
   entity embeddings) stay in, null for the dataset that lacks them — nothing is dropped.
+
+---
+
+## Phase 4 — ranking metrics (AUC, MRR, nDCG)
+
+**Taught in chat** per R1's 2026-08-25 amendment: newsagent-rack analogy → each metric's
+formula broken into named parts → comprehension check. Formulas were initially written in
+LaTeX and **did not render in the terminal**; re-issued as plain-text/ASCII maths at
+Chaitanya's request. Practical note for the rest of the assignment: *no LaTeX in chat
+output — use fenced ASCII formula blocks.*
+
+**Comprehension check — 1 sharpened, 1 correction to Claude's own wording, 1 solid.**
+
+**Q1 — correct mechanism, number added.** RR = 1/3 ✓, and the AUC reasoning ("only the
+pairs with the two items above it are wrong") was exactly right. Sharpened by putting a
+number on it: 19 pairs, 2 wrong, AUC = 17/19 = 0.895. The extension taught from it is the
+one that matters: **the same rank 3 gives AUC 0.895 in a rack of 20 and 0.333 in a rack of
+4, while MRR is 1/3 in both.** AUC normalises by how many items you could have beaten;
+MRR does not. Consequence for the design note: MIND's and EB-NeRD's AUCs are **not
+comparable to each other**, because their rack sizes differ (median 22 vs 9).
+
+**Q2 — right diagnosis; Claude's word "vacuous" was wrong and was corrected.** Chaitanya
+correctly identified that EB-NeRD's median rack of 9 puts the whole list inside a `@10`
+cutoff, and correctly preferred nDCG@5 there. The correction was to Claude's phrasing: a
+rack fully inside the cutoff does **not** score 1.0 for everyone — the position discount
+still runs. What actually happens is that **nDCG@10 stops being a top-k metric and
+silently becomes nDCG@all**, a full-list ordering measure close to what AUC already
+reports. So on EB-NeRD we report four metrics carrying roughly three independent signals.
+Logged because the corrected version is the one that goes in the design note.
+
+**Q3 — solid.** "Only candidates shown are marked; the other 200 retrieved are not shown"
+is exactly the point. The phrase to keep: **unshown is not the same as not-clicked.**
+Treating the ~65,000 unretrieved corpus articles as negatives would invent that many facts
+per impression the log never recorded. This is the `CLAUDE.md` §6 retrieval-vs-re-ranking
+trap, and Chaitanya identified it unprompted.
+
+**Concept taught alongside, not quizzed: tie handling (D23).** The load-bearing idea is
+that a default can be non-neutral — `np.argsort` is *stable*, so "not choosing" a tie
+policy silently chooses "rank by position in the raw candidate list". Verified that order
+carries no click signal (0.5017 / 0.4961 against a uniform 0.5) rather than assuming it.
+Generalises the Phase 3→4 lesson: **a number coming out fine is not evidence the mechanism
+is sound** — here, a fine-looking MRR would have been produced by a leaky tiebreak just as
+readily as by a good ranker.

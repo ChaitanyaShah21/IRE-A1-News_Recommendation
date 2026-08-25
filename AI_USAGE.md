@@ -50,6 +50,9 @@ Chaitanya's `/model` choice) — noted per-commit in git history, not tracked he
 | `reports/semantic_recall_*.csv`, `reports/recall_summary.csv` | Generated output | Not authored; reproducible via the scripts above |
 | `CLAUDE.md` / `PROMPT.md` (R1 amendment) | AI-written, human-directed | Chaitanya directed the change: drop required reading, teach in chat plain-to-technical. Rationale and stated cost written by Claude |
 
+| `src/newsrec/eval/metrics.py` | AI-generated, human-decided | Q4.1 AUC/MRR/nDCG. The tie policy (D23) was chosen by Chaitanya from measured tie rates; AUC uses the rank identity rather than the O(P·N) pair loop |
+| `tests/test_metrics.py` | AI-generated | R10 adversarial suite, 28 tests. Verified by mutation testing: 7 deliberate bugs reintroduced (uncapped IDCG, inverted tiebreak, `rankdata` tie method, removed NaN guard, argsort-stability tiebreak, MRR off-by-one, DCG discount off-by-one) and every one was caught |
+
 _Appended as files are created._
 
 ## Prompt log

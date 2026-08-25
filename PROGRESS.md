@@ -22,6 +22,9 @@ whether it actually worked "from anywhere" — see error log).
 recall@K for K ∈ {50, 100, 200}, both datasets, both candidate pools, 38/38 tests passing.
 Headline finding below.
 
+**Phase 4 — Q4 evaluation harness: in progress.** Q4.1 (the four ranking metrics) is
+done and mutation-tested; 102 tests passing. Next is Q4.2, the re-ranking runner.
+
 **Phase 3 — Q3 semantic retrieval: complete**, tagged `phase-3-complete`. All five
 sub-requirements done: 77,015 article embeddings computed and stored (Q3.1), exact
 brute-force search (Q3.2), mean-pooled user vectors (Q3.3), recall@K for K ∈ {50,100,200}
@@ -333,7 +336,59 @@ top-200 is 31.9% fresh against a 33.5% corpus baseline while **93.5% of real EB-
 clicks are fresh** — which upgrades that from a BM25 limitation to a property of
 content-based retrieval as such.
 
+### Phase 4 (in progress)
+- [x] **Structural point settled before any code:** Q4's metrics grade a *re-ranking of
+      the supplied candidate list*, not whole-corpus retrieval — forced, because AUC/MRR/
+      nDCG each need a per-item clicked/not-clicked label and only the shown list has one.
+      An unretrieved corpus article is *unlabelled*, not negative. Written up in
+      `ARCHITECTURE.md`. Same scorers as Q2/Q3, different candidate set — and the same
+      task both Codabench leaderboards consume, so this feeds Phase 5 directly.
+- [x] Ranking metrics taught (analogy → ASCII formulas → comprehension check).
+      **1 sharpened, 1 correction to Claude's own wording, 1 solid** — see `LEARNING.md`.
+      Two results carried into the design note: **AUC is rack-size sensitive where MRR is
+      not** (rank 3 of 20 → 0.895; rank 3 of 4 → 0.333; MRR 1/3 in both), so MIND's and
+      EB-NeRD's AUCs are not comparable to each other; and **nDCG@10 silently becomes
+      nDCG@all on EB-NeRD** (median rack 9 < cutoff 10), leaving four metrics carrying
+      about three independent signals there.
+      *Housekeeping: LaTeX does not render in this terminal — use fenced ASCII maths.*
+- [x] **D23** — pessimistic tie-breaking (clicked items last within a tie group, so every
+      MRR/nDCG figure is a lower bound), with the optimistic bound reported alongside so
+      the gap *measures* how much tie handling matters. Chosen against measured tie rates
+      (BM25 scores exactly 0 for 2.4% MIND / 4.0% EB-NeRD of candidates; 0.10% of MIND
+      impressions have *every* candidate tied at 0).
+      **The check that justified stopping:** `np.argsort` is stable, so "no tie policy"
+      silently means "rank ties by raw candidate-list order". Verified that order carries
+      no click signal — mean normalised position of a clicked item **0.5017 (MIND) /
+      0.4961 (EB-NeRD)** against 0.5 for a uniform shuffle, and clicked-item-first rates
+      matching their random-order expectations (9.86% vs 10.18%; 11.74% vs 11.70%). Safe,
+      but verified about *these val splits* — which is why the policy is explicit in code.
+- [x] **Q4.1 done** — `src/newsrec/eval/metrics.py` (AUC via the O(n log n) rank identity,
+      MRR, nDCG@5/@10, `evaluate_impressions`, `macro_mean`). **28 new adversarial tests,
+      102 passing overall.** Undefined metrics return NaN, never 0.0, and `macro_mean`
+      returns `(mean, n_defined, n_undefined)` so a metric averaged over a fraction of the
+      impressions cannot reach the design note unnoticed.
+      **Mutation-tested (the Phase 3 practice):** 7 deliberate bugs reintroduced one at a
+      time — uncapped IDCG (`n_pos` instead of `min(n_pos, k)`), inverted tiebreak,
+      `rankdata` method `ordinal` instead of `average`, removed NaN guard, tiebreak
+      replaced by argsort stability, MRR off-by-one, DCG discount off-by-one — **all 7
+      caught.** The AUC suite implements the O(P·N) pair definition independently, so an
+      error in the rank algebra cannot be made in both places at once.
+
 ## Next step
+
+**Q4.2 — the re-ranking runner.** Score each val impression's own `candidate_article_ids`
+with both scorers (BM25 weights from `bm25.py`, cosine from `embeddings.parquet`) and feed
+`evaluate_impressions`. Reuse `bm25_search.py`'s per-unique-user query construction; note
+that D19's availability filter is **not** applicable here — the platform already chose the
+candidates, so restricting them further would be re-deciding a decision the log records.
+
+**Then Q4.3 beyond-accuracy**, where the flagged diversity-basis fork gets raised.
+
+**Remaining in Phase 4:** Q4.2 re-ranking runner · Q4.3 beyond-accuracy (diversity fork) ·
+slices · bootstrap 95% CIs · Q9 ablation + `tests/test_no_leakage.py`.
+
+<details>
+<summary>Superseded Phase 4 entry note</summary>
 
 **Phase 4 — Q4 evaluation harness, with Q9 folded in.** AUC, MRR, nDCG@5, nDCG@10,
 beyond-accuracy (intra-list diversity, novelty, coverage), at least one slice, bootstrap
@@ -361,6 +416,8 @@ grading the Phase 3→4 quiz, not while writing Phase 4 code.
 political stories and one Starbucks item; semantic retrieval returned five near-duplicate
 Popeyes chicken-sandwich articles and nothing political. That is a diversity failure, not
 an accuracy failure, and it is the qualitative example Q4's numbers should explain.
+
+</details>
 
 - [x] **Phase 3→4 recall quiz done 2026-08-25** (1 partial, 1 re-taught, 1
       right-answer-wrong-reasoning — see `LEARNING.md`). **A new session does not need to
