@@ -22,9 +22,12 @@ whether it actually worked "from anywhere" — see error log).
 recall@K for K ∈ {50, 100, 200}, both datasets, both candidate pools, 38/38 tests passing.
 Headline finding below.
 
-**Phase 3 — Q3 semantic retrieval: in progress.** Concepts taught, D20 (model) and D21
-(brute-force search) taken, environment installed and verified CUDA-free. The Phase 2→3
-recall quiz is done — **do not repeat it**. Next is Q3.1, embedding the articles.
+**Phase 3 — Q3 semantic retrieval: complete**, tagged `phase-3-complete`. All five
+sub-requirements done: 77,015 article embeddings computed and stored (Q3.1), exact
+brute-force search (Q3.2), mean-pooled user vectors (Q3.3), recall@K for K ∈ {50,100,200}
+on both datasets under both candidate pools (Q3.4), and the lexical-vs-semantic comparison
+written up as five findings in `ARCHITECTURE.md` (Q3.5). 74/74 tests passing. The Phase
+2→3 recall quiz is done — **do not repeat it**.
 
 ---
 
@@ -63,7 +66,7 @@ Deadline **27 Aug 2026**. Budget ~20 focused hours across 6 days.
 | 0 | Orientation & scaffolding | 1.5 h | ✅ done — tagged `phase-0-complete` |
 | 1 | Q1 — reproducible data pipeline | 4 h | ✅ done — tagged `phase-1-complete` (ran well over budget, see note below) |
 | 2 | Q2 — BM25 lexical retrieval | 4 h | ✅ done — tagged `phase-2-complete`. Ran over budget: Chaitanya chose D19's availability variant knowing it would, and it produced the phase's main finding |
-| 3 | Q3 — semantic retrieval (embeddings) | 3.5 h | 🟡 in progress — concepts taught, D20/D21 taken, environment installed |
+| 3 | Q3 — semantic retrieval (embeddings) | 3.5 h | ✅ done — tagged `phase-3-complete`. Roughly on budget; the 13 min of CPU inference is a one-off |
 | 4 | Q4 — evaluation harness + Q9 (folded in, no separate budget line) | 4 h | ⬜ not started |
 | 5 | Q5 — scale-up & Codabench submission | 2.5 h | ⬜ not started |
 | 6 | Q6/Q7 — design note & deliverables | 2 h | ⬜ not started |
@@ -292,7 +295,60 @@ reporting it without the baseline column would have been materially misleading.
       languages. Peak RSS during the build 1.69 GB — flat in corpus size, since
       `model.encode` streams in batches of 64.
 
+- [x] **Q3.2/Q3.3/Q3.4/Q3.5 done** — `src/newsrec/retrieval/semantic_search.py`,
+      `scripts/run_semantic_recall.py`, `scripts/summarise_recall.py` (generalised from the
+      BM25-only version to cover both methods). **21 new tests, 74 passing overall.**
+      Results in `reports/recall_summary.csv`; full comparison written up as Q3.5's five
+      findings in `ARCHITECTURE.md`.
+- [x] **`newsrec/retrieval/availability.py` extracted** so BM25 and semantic share one D19
+      implementation rather than two copies that could drift. Regression-verified: re-ran
+      EB-NeRD/available BM25 and the output CSV is **identical** to the committed Q2 result
+      (recall@200 0.0727, 8,777 tasks).
+- [x] **Two bugs caught by mutation-testing our own tests**, not by a traceback:
+      1. Dense cosine scoring must mask with **-inf, not 0.0**. BM25 excludes candidates by
+         zeroing them, which is right when 0 is the minimum possible score — but cosine
+         runs [-1, 1] and 0 is mid-range, so copying that convention floats every excluded
+         and unavailable article above every genuinely negative-scoring one. Worst on D19's
+         EB-NeRD run, where ~8,814 of 11,777 articles are masked per bucket.
+      2. A pooled user vector with a **tiny but non-zero norm** passes a `norms > 0` check,
+         then gets normalised — inflating pure float residue (norm ~5e-08) into a confident
+         unit direction. Fixed with a `MIN_NORM = 1e-6` threshold plus a test proving a
+         bare zero-check fails it.
+
+**Q3 headline (recall@200, macro, val, has-query slice):**
+
+| Dataset | Pool | BM25 | Semantic | BM25 lift | Semantic lift |
+|---|---|---|---|---|---|
+| MIND | whole corpus | 2.05% | **2.17%** | 6.69× | **7.08×** |
+| MIND | available | 3.95% | **5.41%** | 4.19× | **5.74×** |
+| EB-NeRD | whole corpus | 2.45% | **2.65%** | 1.44× | **1.56×** |
+| EB-NeRD | available | 7.27% | **8.57%** | 1.07× | **1.26×** |
+
+**The Phase 3 finding.** Semantic wins all four at K=200, but the structure matters more
+than the margin: **BM25's lift decays with K while semantic's holds** (EB-NeRD available:
+BM25 1.21×→1.07×, semantic 1.27×→1.26×), because BM25 ranks only articles sharing a term
+and runs out of signal, while cosine ranks the whole corpus. And running a completely
+different matching function reproduced Q2's freshness blindness exactly — semantic's
+top-200 is 31.9% fresh against a 33.5% corpus baseline while **93.5% of real EB-NeRD
+clicks are fresh** — which upgrades that from a BM25 limitation to a property of
+content-based retrieval as such.
+
 ## Next step
+
+**Phase 4 — Q4 evaluation harness, with Q9 folded in.** AUC, MRR, nDCG@5, nDCG@10,
+beyond-accuracy (intra-list diversity, novelty, coverage), at least one slice, bootstrap
+95% confidence intervals, run over **both** BM25 and semantic results. Then Q9's ablation
+and `tests/test_no_leakage.py`.
+
+**`tests/test_no_leakage.py` must assert both halves of D19's invariant**, not just the
+first: (1) the predicate is `first_seen < T`, strictly — never `<=`; and (2) `first_seen`
+is computed from `candidate_article_ids` (what was shown) and **never** from
+`clicked_article_ids`. Availability derived from clicks would satisfy (1) and still be
+leakage. Both conditions now live in one place — `newsrec/retrieval/availability.py` —
+which is what the test should target.
+
+<details>
+<summary>Superseded Q3.3 next-step note</summary>
 
 **Q3.3 — the user representation.** Mean-pool the embeddings of each user's last 10
 clicked articles (mirroring D12's N and field choice so Q3.5 varies only the algorithm),
@@ -310,6 +366,8 @@ empty query and an all-zero score vector. Here it would give a mean over *zero* 
 a division by zero producing NaN, which propagates silently through argsort rather than
 scoring 0. Affects the same 1,556 MIND val impressions and 0 EB-NeRD ones. Must be
 handled explicitly and tested.
+
+</details>
 
 <details>
 <summary>Superseded Q3.1 next-step note</summary>

@@ -42,6 +42,12 @@ Chaitanya's `/model` choice) — noted per-commit in git history, not tracked he
 | `tests/test_semantic_embeddings.py` | AI-generated | R10 adversarial suite, 15 tests. The two null-representation cases (MIND null vs EB-NeRD blank) were found by checking the real store before writing the code, not after a traceback |
 | `scripts/build_embeddings.py` | AI-generated | Thin entry point for Q3.1; kept out of build_pipeline.py per D22 |
 | `data/processed/embeddings.parquet` | Generated output | Not authored; reproducible via the script above. Gitignored |
+| `src/newsrec/retrieval/semantic_search.py` | AI-generated, human-decided | Q3.3 mean pooling and the D19 two-pool constraint follow Chaitanya's earlier decisions; the -inf masking fix and the MIN_NORM threshold were found by mutation-testing the tests, not by a failure |
+| `tests/test_semantic_search.py` | AI-generated | R10 adversarial suite, 21 tests, built so the wrong implementation visibly fails - verified by deliberately reintroducing each bug and confirming the tests catch it |
+| `src/newsrec/retrieval/availability.py` | AI-generated | D19 logic extracted from run_bm25_recall.py so both retrievers share one implementation; regression-verified against the committed Q2 numbers |
+| `scripts/run_semantic_recall.py` | AI-generated | Thin entry point for Q3.4, deliberately the same shape as the BM25 runner so Q3.5 compares methods not harnesses |
+| `scripts/summarise_recall.py` | AI-generated, human-edited history | Was `summarise_bm25_recall.py`; generalised to both methods for Q3.5. The random-baseline column it adds exists because Chaitanya's D19 discussion established that absolute recall alone misleads |
+| `reports/semantic_recall_*.csv`, `reports/recall_summary.csv` | Generated output | Not authored; reproducible via the scripts above |
 | `CLAUDE.md` / `PROMPT.md` (R1 amendment) | AI-written, human-directed | Chaitanya directed the change: drop required reading, teach in chat plain-to-technical. Rationale and stated cost written by Claude |
 
 _Appended as files are created._
