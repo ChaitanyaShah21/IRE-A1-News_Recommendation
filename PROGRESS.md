@@ -58,7 +58,7 @@ Deadline **27 Aug 2026**. Budget ~20 focused hours across 6 days.
 |---|---|---|---|
 | 0 | Orientation & scaffolding | 1.5 h | ✅ done — tagged `phase-0-complete` |
 | 1 | Q1 — reproducible data pipeline | 4 h | ✅ done — tagged `phase-1-complete` (ran well over budget, see note below) |
-| 2 | Q2 — BM25 lexical retrieval | 4 h | 🔄 in progress, started 2026-08-23 — pacing checkpoint: revisit budget conversation if this runs over |
+| 2 | Q2 — BM25 lexical retrieval | 4 h | ✅ done — tagged `phase-2-complete`. Ran over budget: Chaitanya chose D19's availability variant knowing it would, and it produced the phase's main finding |
 | 3 | Q3 — semantic retrieval (embeddings) | 3.5 h | ⬜ not started |
 | 4 | Q4 — evaluation harness + Q9 (folded in, no separate budget line) | 4 h | ⬜ not started |
 | 5 | Q5 — scale-up & Codabench submission | 2.5 h | ⬜ not started |
@@ -195,15 +195,52 @@ in Phase 4 beyond what Q9 requires.
       same class of "only works from the right directory" bug as the Q1.5 error-log entry.
 - [x] `scipy==1.18.1`, `pytest==9.1.1` pinned in `requirements.txt`.
 
+- [x] Q2.2–2.4 — query side (`src/newsrec/retrieval/bm25_search.py`,
+      `src/newsrec/eval/recall.py`, `scripts/run_bm25_recall.py`,
+      `scripts/summarise_bm25_recall.py`). Decisions D17–D19 taken. **38/38 tests pass.**
+      Results in `reports/bm25_recall_summary.csv`.
+
+**Q2 headline (recall@200, macro, val, impressions with a query), with the random
+baseline that makes it interpretable:**
+
+| Dataset | Pool | recall@200 | random@200 | lift |
+|---|---|---|---|---|
+| MIND | whole corpus | 2.05% | 0.31% | **6.7×** |
+| MIND | available | 3.95% | 0.94% | **4.2×** |
+| EB-NeRD | whole corpus | 2.45% | 1.70% | **1.4×** |
+| EB-NeRD | available | 7.27% | 6.81% | **1.07×** |
+
+**The Phase 2 finding.** BM25 retrieves topically-correct articles (verified by
+inspection: a Russia/Ukraine reader gets Russia/Ukraine headlines back) but is blind to
+time — its top-200 has essentially the corpus's own freshness profile (16.6% published
+on/after the val window start) while **92.7% of actually-clicked articles are fresh**.
+There is no time term anywhere in the BM25 formula, so this cannot be tuned away; it has
+to be handled outside the formula (D19) or not at all. Restricting to in-circulation
+articles triples EB-NeRD's absolute recall while *lowering* its lift over random from
+1.4× to 1.07× — i.e. on EB-NeRD nearly all the apparent gain is the pool shrinking, and
+reporting it without the baseline column would have been materially misleading.
+
+- [x] D16's ablation answered with a number rather than an assertion: raw vs binary
+      query-term frequency is **near-noise** at ~10-title queries (MIND whole-corpus
+      favours raw 2.05% vs 1.84%; MIND available favours binary at K=200 but raw at
+      K=50; EB-NeRD tied). Cheap to keep, informative to have measured.
+
 ## Next step
 
-**Q2.2/2.3/2.4 — the query side.** Build each user's query from the titles of their last
-10 clicked articles (D12), score in batches against the index (D14's memory constraint —
-a full dense score matrix is ~9.9 GB for MIND val alone, see `SCALE_NOTES.md`), exclude
-articles already in the user's history (D15), take top-K, and report recall@{50, 100, 200}
-for both datasets. Run the binary-query ablation from D16 alongside it. Watch for the
-cold-start case: 1,407 MIND val users have empty history and therefore no query at all —
-decide and document what they retrieve rather than letting them fall out silently.
+**Phase 3 — Q3, semantic retrieval (embeddings).** Teach embeddings and approximate
+nearest neighbour search per R1 before any code, then decide: EB-NeRD's provided vectors
+vs computing our own (the designated drop-first item if we slip), and where embeddings
+live in the store (the D3 sub-decision deferred to this phase).
+
+**Constraint inherited from D19, do not lose it:** Q3.5 compares lexical vs semantic, and
+that comparison is only meaningful if both retrieve from the **same candidate pool**. So
+embeddings must be run under *both* the whole-corpus and available pools, or the
+comparison measures pool size rather than method — exactly the trap the lift column
+exposed in Q2.
+
+**Also outstanding for Q9:** `tests/test_no_leakage.py` must assert D19's *strict*
+inequality (`first_seen < T`, never `<=`), so a later well-meaning edit cannot silently
+import the future.
 
 ---
 
@@ -314,6 +351,8 @@ we may have already solved it.
 
 | Date | Error | Root cause | Fix chosen | Trade-off accepted |
 |---|---|---|---|---|
+| 2026-08-25 | `reports/bm25_recall_val_n10.csv` silently lost EB-NeRD's whole-corpus results — noticed only because the consolidated summary table was missing four rows | The output filename contained the split and `n_recent` but **not the dataset or the pool**, so `--datasets mind` wrote to the same path `--datasets ebnerd` had just written. No error, no warning; the numbers were still correct on screen, just gone from disk. The class of bug where output *looks* fine because the wrong thing was overwritten, not corrupted | Put every varying input in the filename: `bm25_recall_{datasets}_{split}_n{N}_{pool}{tag}.csv`, with a comment recording why. Re-ran the four configurations; regenerated numbers matched the originals exactly, which also confirmed reproducibility | None — strictly more correct. Cost ~15 min of re-running MIND. Worth noting the near-miss: had the summary script not existed, the missing rows would likely have gone unnoticed into the design note |
+| 2026-08-25 | `test_first_seen_times_takes_the_minimum` failed with `ComputeError: cannot cast 'Object' type` | Test-construction error, not a code bug: the test passed `np.datetime64` values into `pl.DataFrame`, which Polars treats as opaque Python objects rather than recognising as timestamps | Used Python `datetime` objects, which Polars maps to its native `Datetime` type | None — the production code was never involved; only the fixture was wrong |
 | 2026-08-23 | `python scripts/build_pipeline.py` run from a directory other than the repo root (e.g. `/tmp`) crashed with `FileNotFoundError: configs/mind.yaml` — found because Chaitanya questioned whether the script's `sys.path` fix really made it runnable "from anywhere" | The `sys.path.insert` fix only made the *import* of `newsrec.build` independent of the caller's working directory (via `__file__`, which always resolves to the script's real location). `Path("configs") / ...` and `OUTPUT_DIR = Path("data/processed")` were still plain relative paths, resolved against whatever the shell's cwd happened to be — an inconsistency between two parts of the same file | Introduced one `REPO_ROOT = Path(__file__).resolve().parent.parent` constant and anchored every path in the script to it — `src/`, `configs/`, `data/processed/`, and the `raw_root` value read out of each YAML config | None meaningful — this is strictly more correct with no added complexity; verified by re-running the exact `/tmp` invocation that first exposed it, plus re-checking the happy path and the failure-message path both still work |
 | 2026-08-22 | Not our bug — a caveat about the provided notebook: its printed MIND train time range (`"11/10/2019 10:00 AM to 11/9/2019 9:59:58 AM"`) is chronologically wrong | The notebook computed it with plain Python `min()`/`max()` on the raw time **strings**, which compares them lexicographically (character by character), not chronologically — `"11/10/..."` sorts before `"11/9/..."` as text even though Nov 9 is earlier in time | None needed in our code — `ingest_mind.load_behaviors` already parses `time` into a real `Datetime` via `.str.strptime()`, so `.min()`/`.max()` on our `timestamp` column are correct (verified: MIND train is actually Nov 9–14, dev is Nov 15). Just don't trust the provided notebook's printed ranges at face value. | None — this only cost us noticing it before it fed into the temporal-split design |
 | 2026-08-22 | `pl.concat([mind_articles_df, ebnerd_articles_df])` raised `type Float32 is incompatible with expected type Float64` (column `sentiment_score`), and the same for `impressions`' `read_time` | MIND's null placeholder columns default to `Float64` (`pl.lit(None, dtype=pl.Float64)`), but EB-NeRD's real `sentiment_score`/`read_time`/`scroll_percentage` columns are natively `Float32` in the source Parquet files - the two tables' schemas looked compatible by eye (both "float") but weren't bit-for-bit identical types | Cast all three EB-NeRD columns to `Float64` explicitly in `ingest_ebnerd.py` | None meaningful - Float64 is strictly more precise, so casting up loses nothing; found by actually running `pl.concat()` as an adversarial test (R10) rather than assuming matching column names implied matching dtypes |

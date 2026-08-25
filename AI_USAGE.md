@@ -31,6 +31,12 @@ Chaitanya's `/model` choice) — noted per-commit in git history, not tracked he
 | `src/newsrec/retrieval/bm25.py` | AI-generated, human-decided | Tokenisation, parameters, implement-vs-import, and query-term weighting (D11, D13, D14, D16) chosen by Chaitanya |
 | `tests/test_bm25_index.py` | AI-generated | R10 adversarial suite, 18 tests; the Danish-tokenisation case was recorded as a requirement in D11 before the code existed |
 | `pytest.ini` | AI-generated | Puts `src/` on the path so `pytest` works from the repo root |
+| `src/newsrec/retrieval/bm25_search.py` | AI-generated, human-decided | Query construction, cold-start handling, and the availability variant (D12, D15, D16, D17, D19) chosen by Chaitanya, who also challenged whether D19 was permitted by the spec — the compliance argument now in D19 exists because he asked |
+| `src/newsrec/eval/recall.py` | AI-generated, human-decided | Macro-vs-micro averaging (D18) chosen by Chaitanya |
+| `tests/test_bm25_search.py` | AI-generated | R10 adversarial suite, 20 tests, batch-invariance included |
+| `scripts/run_bm25_recall.py` | AI-generated | Thin entry point for Q2.4 |
+| `scripts/summarise_bm25_recall.py` | AI-generated | Adds the random-baseline column without which the D19 comparison misleads |
+| `reports/bm25_recall_*.csv` | Generated output | Not authored; reproducible via the two scripts above |
 
 _Appended as files are created._
 
