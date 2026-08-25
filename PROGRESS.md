@@ -584,10 +584,52 @@ content-based retrieval as such.
       *(Separately: the mutation harness itself was broken on the first run — `python` was
       not on PATH, so no mutation ever applied and every result read "MISSED". A broken
       verifier produces failure-shaped output. Worth remembering.)*
-- [ ] Test-corpus embeddings — **running**, ~80 min projected (R8 flag: over the ~43 min
-      `SCALE_NOTES.md` estimate, because concurrent work dropped throughput from 96 to
-      ~50 articles/s).
-- [ ] Chunked prediction generation, submission formats, two Codabench submissions.
+- [x] **Submission format recovered from Codabench's API** (both competition pages render
+      as an empty JavaScript shell and fetch as nothing). Both want
+      `<impression_id> [r1,...,rn]`; the file inside the zip is `prediction.txt` for MIND
+      and `predictions.txt` for EB-NeRD — one letter apart.
+      **`r_i` is the rank of the candidate at position `i`, i.e. the INVERSE permutation
+      of an argsort.** Writing `argsort(-scores)+1` gives a structurally perfect file that
+      scores near random and cannot be diagnosed from a leaderboard. Pinned by tests
+      against both competitions' own worked examples.
+      **Correction (Chaitanya, 2026-08-25):** the per-day submission caps printed on those
+      pages (1/day MIND, 5/day EB-NeRD) are live-competition limits from years ago; the
+      real limit is **10/day on both**. Second instance of D20's stale-documentation trap.
+- [x] **`predict.py` + `validate_submission.py`** — the rank-vector writer, the zip
+      packager, and a pre-flight validator that re-reads the raw bundle to check line *i*
+      carries impression *i*'s id and that every rank list is a permutation of 1..n.
+      **22 new tests.**
+- [x] **Official EB-NeRD example submission downloaded as a format oracle** (230 MB):
+      one flat `predictions.txt`, **13,536,710 lines** — every row, including the 200,000
+      `is_beyond_accuracy` ones — and its first five impression ids and candidate counts
+      match the raw bundle row for row.
+- [x] **MIND test embeddings**: 120,961 vectors, 24.4 min at 82 articles/s.
+- [x] **MIND submission generated and validated.** 2,370,727 lines, 6.4 min at ~7,100
+      impressions/s, 291 MB text / 107 MB zip. Validator: **0 syntax errors, 0 wrong or
+      out-of-order ids, 0 malformed permutations.** Independently re-verified by
+      recomputing three impressions' rankings (16, 7 and 82 candidates) outside the
+      pipeline — all three match exactly.
+      **The rank-1 position histogram was read against its null model rather than
+      eyeballed:** pos0 wins 10.5% vs pos1 9.2%, which looked like position bias in a
+      position-blind scorer. Random baseline is E[1/n] = 9.32%, and the 1.18-point excess
+      is exactly what the 29,108 cold-start impressions contribute (all candidates tie at
+      zero → stable order gives rank 1 to position 0). Not a bug.
+- [x] **EB-NeRD test user coverage verified**: all 807,677 behaviors users have a history
+      row and no history row is orphaned — exact 1:1, so no cold-start-by-absence.
+- [x] **`README.md` written** — Q7 deliverable #1 requires "README.md with one-command
+      reproduce" and the repository had none. Quickstart, full reproduce table, submission
+      workflow, layout, headline results, three findings.
+      *Measured timings are marked as such; steps never stopwatch-timed say so rather than
+      carrying an invented number.*
+- [ ] EB-NeRD test embeddings — **running** (~9 min left at time of writing).
+- [ ] EB-NeRD submission generation + validation (~35 min projected).
+- [ ] **Chaitanya to do:** upload both zips, screenshot both leaderboards.
+
+### R8 note on the embedding over-run
+Projected ~43 min in `SCALE_NOTES.md`, actually ~50 min across both corpora. Cause is
+CPU contention, not a bad estimate: throughput was ~50 articles/s while development work
+ran on the same cores and ~115 articles/s when it did not. Unattended wall-clock, so it
+cost schedule rather than attention.
 
 ## Next step
 

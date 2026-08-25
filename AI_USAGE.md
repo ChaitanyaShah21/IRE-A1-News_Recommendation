@@ -85,3 +85,10 @@ _Appended as files are created._
 
 ## Prompt log
 Full session transcripts exported to `reports/ai_transcripts/` before submission.
+
+| `src/newsrec/predict.py` | AI-generated | Q5 rank-vector writer and zip packager. The inverse-permutation trap it exists to prevent was found by reading both competitions' published worked examples out of Codabench's API, not by inspection |
+| `tests/test_predict.py` | AI-generated | R10 adversarial suite, 22 tests, pinned against BOTH competitions' own worked examples plus a derived round-trip check so a mis-transcribed example cannot validate a wrong implementation |
+| `scripts/run_submission.py` | AI-generated | Chunked, streaming submission generator; never materialises the split, user vectors go to an on-disk memmap, scoring matrix restricted to articles that can actually be candidates |
+| `scripts/validate_submission.py` | AI-generated | Pre-flight validator. Exists because a submission cannot be debugged from a leaderboard - it returns one number and no diagnostics |
+| `README.md` | AI-generated, human-decided | Q7 deliverable #1 ("README.md with one-command reproduce"), which the repository was missing entirely until Phase 5. Results tables are copied from measured runs; step timings that were never stopwatch-timed are marked as such rather than estimated |
+| `reports/submissions/*` | Generated output | Not authored; gitignored, reproducible via the scripts above |
