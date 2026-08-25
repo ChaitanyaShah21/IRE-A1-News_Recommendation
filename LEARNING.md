@@ -11,6 +11,51 @@ The comprehension-check record continues unchanged — it is the part that matte
 
 ---
 
+## Phase 3 → Phase 4 recall check (2026-08-25)
+
+Three questions: where a `-inf` → `0.0` "simplification" would be exposed; whether a high
+freshness number would contradict "cosine has no time term"; and predicting intra-list
+diversity. **One partial, one wrong, one right-answer-wrong-reasoning. A new session does
+not need to repeat this quiz — but should be aware of the gaps below.**
+
+**Q1 — principle right, application missing.** Correctly identified that 0.0 is mid-range
+for cosine so masked articles outrank negative-scoring ones. Did not answer which run
+exposes it. Taught: **EB-NeRD/available**, because it masks ~8,814 of 11,777 articles
+(75%) into a surviving pool of ~2,478–3,385, so masked articles flood a 200-slot list —
+whereas MIND/whole-corpus masks only ~15 of 65,238 and the bug is invisible. General rule
+given: *a masking bug is exposed by the run that masks the most into the smallest
+surviving pool*, so that is the configuration to check first, not the fastest one.
+
+**Q2 — wrong, and re-taught in full.** Answered "yes, 60% fresh would contradict it". The
+correct answer is **no**. Key distinction, which had not landed: *"cosine similarity
+contains no time term" is a **structural** fact readable off the formula* — no empirical
+measurement can contradict something verifiable by inspection. A 60% result would have
+been **correlation**: a breaking story makes fresh articles topically similar to recent
+reading, so cosine ranks them highly *because of topic*, with freshness riding along. Why
+that matters practically: such an effect is accidental and unreliable — it holds when the
+news cycle aligns and vanishes when it doesn't, so it cannot be tuned, controlled, or
+reported as a property of the system. Terms also re-explained on request ("fresh",
+"corpus baseline" as the what-you-get-without-trying number).
+
+**Named as a rule rather than three anecdotes** (D19's random baseline, D11's stemming,
+and this): **a number moving in the direction you wanted never tells you why it moved.**
+Flagged as the most transferable idea in the project — belongs in the design note.
+
+**Q3 — right answer ("worse"), reasoning argued for the opposite.** The stated reason
+("BM25 gives articles with common words so they'd be similar") is an argument that *BM25*
+is the less diverse one. Corrected mechanism: semantic ranks by proximity in a continuous
+space, so near-duplicates are neighbours *of each other* as well as of the user vector and
+one dense cluster fills the whole top-K (the Popeyes result); BM25 matches each article to
+the *query*, so retrieved items need not resemble one another.
+
+**Raised for Phase 4 as a decision point:** intra-list diversity is normally the average
+pairwise distance between retrieved articles' **embeddings**. Measured in the same space
+we retrieved with, semantic retrieval is graded by the quantity it explicitly minimises
+and will look bad almost by construction. Not invalid, but it must be stated or the design
+note reports a tautology as a finding.
+
+---
+
 ## Phase 3 — Embeddings and nearest-neighbour search (2026-08-25)
 
 **Taught in chat** (no external reading, per the amendment above): the warehouse analogy
