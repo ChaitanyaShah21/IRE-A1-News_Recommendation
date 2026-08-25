@@ -410,3 +410,49 @@ Three ideas worth carrying past this assignment:
 `__pycache__` — see the error log. The failure direction is benign (a stale cache makes a
 mutation look *survived*, which reads as a test gap and gets investigated) but it cost
 fifteen minutes of hunting a bug that was not in the code.
+
+---
+
+## Phase 5 — Q5, scale-up and Codabench submission
+
+### Concept: the rank vector (the inverse-permutation trap)
+**Taught 2026-08-25**, in chat per R1's amended form: plain-language framing (a dog-show
+judge writing *collar numbers on dogs standing in line*, versus writing *a list of winners
+in order*), then the technical statement, then the check. Full entry in `GLOSSARY.md`.
+
+**Comprehension check.** Candidates `[A, B, C]`, scores A = 0.2, B = 0.9, C = 0.5. What
+line do we write, and what would the buggy `argsort + 1` spelling have written?
+
+**Chaitanya's answer: `3,1,2` — correct**, on the part that matters. B wins so its rank is
+1, C is 2, A is 3, written into each candidate's own position. He did not give the second
+half; the buggy spelling would have produced `[2,3,1]`, because `argsort(-scores)` is
+`[1,2,0]` ("candidate 1 came first, candidate 2 came second, candidate 0 came third") and
+adding one converts *identities* into what merely looks like ranks.
+
+**Why this one earned a check under reduced-depth pacing.** Both answers are permutations
+of 1..3. Both have the right length. Both pass every structural test that can be written
+against a submission file. The only symptom of choosing wrong is a leaderboard score near
+random, on a channel that returns a single number and no diagnostics — so it is the one
+concept in Phase 5 where being confidently wrong is invisible rather than loud.
+
+**Generalisation worth carrying to the design note**, and the third instance of the same
+shape in this project: *a value can be well-formed, in-range, and of the correct type
+while meaning something entirely different from what the consumer expects.* The earlier
+two were the Float32/Float64 concat mismatch (Phase 1) and the -inf-versus-0.0 masking
+convention for cosine (Phase 3, where 0 is mid-range rather than minimal). In all three
+the type system, the tests-as-written, and casual inspection all pass.
+
+### Diagnostic read rather than assumed: the rank-1 position histogram
+Not a taught concept, but a worked reasoning step worth recording. The MIND submission's
+rank-1 winner sits at candidate position 0 for **10.5%** of impressions, against **9.2%**
+for position 1 — which looks like position bias leaking into a position-blind scorer.
+
+Resolved by computing the actual random baseline instead of eyeballing it: for a uniform
+ranking, P(position 0 wins) is **E[1/n] = 9.32%**, not 1/mean(n). The 1.18-point excess is
+then fully accounted for by the **29,108 cold-start impressions (1.2%)** whose candidates
+all score a flat zero, where stable ordering hands rank 1 to position 0 every time:
+1.2% x (1 - 0.093) = 1.1 points. Position 1 sitting exactly on 9.2% confirms it.
+
+The habit being practised: **an anomaly is not evidence until its null model has been
+computed.** Phase 3's "a number moving in the direction you wanted never tells you why"
+is the same lesson from the opposite side.
