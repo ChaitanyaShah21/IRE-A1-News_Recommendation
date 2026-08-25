@@ -370,3 +370,43 @@ but not always. Two sharpenings added:
   systems, they rank the worst one first. They price what a method *gave up*, and only
   mean something read against the accuracy table — which is why D24's random arm is run
   through this module too.
+
+---
+
+## Phase 4 — Q9, what leakage is actually worth
+
+Not a quizzed concept; recorded because the measurement reframed the whole phase.
+
+The abstract version — "don't leak future information" — was already understood. What the
+ablation added is a **price**:
+
+> On EB-NeRD, the *same* popularity algorithm scores AUC 0.4647 counting training-window
+> clicks and 0.6657 counting the evaluated window. Our best honest system (semantic)
+> scores 0.5331, and beats random by 0.0344. **One leaked feature is worth about four
+> times the entire honest modelling effort of Phases 2–4.**
+
+Three ideas worth carrying past this assignment:
+
+1. **Leakage is the only bug whose symptom is a better number.** Every other failure here
+   announced itself — a traceback, a NaN, an implausible figure. A leak announces itself
+   with success, which is the one result nobody investigates. That is why Q9 demands a
+   *test* rather than a check: it has to be asserted, because it cannot be noticed.
+
+2. **A leak is worth most exactly where honest methods are weakest.** Identical cheating
+   buys +0.2010 AUC on EB-NeRD and +0.0679 on MIND, because 86.9% of EB-NeRD's val
+   candidates were never clicked in training so nothing legitimate predicts them. The
+   corollary is the uncomfortable one: the settings where leakage is most tempting are
+   the settings where its absence is hardest to spot, since there is no strong honest
+   baseline whose absence would look suspicious.
+
+3. **A test that pins a real property can still let a wrong conclusion through.** Twice in
+   this phase. The coverage bootstrap had a test asserting its exact downward bias and
+   treating it as correct (D27). And a leakage test that cannot fail is worse than no test,
+   because it provides false assurance — which is why all five deliberate leaks were
+   reintroduced and confirmed caught, rather than the suite being trusted because it was
+   green.
+
+**Also learned, mechanically:** the mutate→test→restore loop can be poisoned by a stale
+`__pycache__` — see the error log. The failure direction is benign (a stale cache makes a
+mutation look *survived*, which reads as a test gap and gets investigated) but it cost
+fifteen minutes of hunting a bug that was not in the code.

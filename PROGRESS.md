@@ -25,9 +25,8 @@ Headline finding below.
 **Phase 4 — Q4 evaluation harness: in progress.** Q4.1 (metrics) and Q4.2 (the
 re-ranking runner, four scorers, both datasets) are done and mutation-tested; 123 tests
 passing.
-Q4.3 (beyond-accuracy, slices) and Q4.4 (bootstrap CIs) are done too; 177 tests passing.
-**All of Q4 is complete.** Next and last in this phase: Q9's ablation and
-`tests/test_no_leakage.py`.
+Q4.3, Q4.4 and Q9 are done too. **Phase 4 is complete**, 203 tests passing. Next is
+Phase 5 — Codabench, the standing deadline risk.
 
 **Phase 3 — Q3 semantic retrieval: complete**, tagged `phase-3-complete`. All five
 sub-requirements done: 77,015 article embeddings computed and stored (Q3.1), exact
@@ -74,7 +73,7 @@ Deadline **27 Aug 2026**. Budget ~20 focused hours across 6 days.
 | 1 | Q1 — reproducible data pipeline | 4 h | ✅ done — tagged `phase-1-complete` (ran well over budget, see note below) |
 | 2 | Q2 — BM25 lexical retrieval | 4 h | ✅ done — tagged `phase-2-complete`. Ran over budget: Chaitanya chose D19's availability variant knowing it would, and it produced the phase's main finding |
 | 3 | Q3 — semantic retrieval (embeddings) | 3.5 h | ✅ done — tagged `phase-3-complete`. Roughly on budget; the 13 min of CPU inference is a one-off |
-| 4 | Q4 — evaluation harness + Q9 (folded in, no separate budget line) | 4 h | ⬜ not started |
+| 4 | Q4 — evaluation harness + Q9 (folded in, no separate budget line) | 4 h | ✅ done — tagged `phase-4-complete`. Ran over (~5.5 h): the D25–D28 forks and the coverage-bias catch were the cost |
 | 5 | Q5 — scale-up & Codabench submission | 2.5 h | ⬜ not started |
 | 6 | Q6/Q7 — design note & deliverables | 2 h | ⬜ not started |
 
@@ -511,8 +510,65 @@ content-based retrieval as such.
    Popularity scores AUC **0.9737** on the train-popularity head slice against 0.5423
    overall. Same shape as measuring semantic's diversity in the space it optimises (D25).
    Two instances in one phase, so it is a rule for the design note.
+- [x] **`tests/test_no_leakage.py` done** — 12 tests in five groups (temporal, label-free,
+      split boundary, history snapshot, scorers-are-blind). **Mutation-verified: 5
+      deliberate leaks reintroduced, all 5 caught**, including relaxing `first_seen < T`
+      to `<=`. A leakage test that cannot fail is worse than none, so this was checked
+      rather than assumed.
+      Strongest single assertion: **flipping every label leaves BM25 and semantic scores
+      byte-identical.** The landmine is a live test, not a comment — it performs the
+      val-history-on-train-impressions mis-join and asserts the overlap check fires
+      (measured 99.52%).
+- [x] **D28 + Q9 ablation done** — `src/newsrec/eval/ablation.py`,
+      `scripts/run_ablation.py`. **14 new tests, 203 passing overall.** Mutation-tested:
+      6 bugs reintroduced, all 6 caught. The leaky feature is quarantined and a test
+      asserts **no other file in the package references it**.
+
+**Q9 headline (val, AUC, has-query slice, 1,000-resample CIs):**
+
+| arm | MIND | EB-NeRD |
+|---|---|---|
+| popularity (train) · safe | 0.5423 | 0.4647 |
+| **popularity (FUTURE) · LEAK** | **0.6102** | **0.6657** |
+| semantic · safe (our best honest system) | 0.6338 | 0.5331 |
+| semantic + seen-before · safe | 0.6339 (+0.0001) | 0.5314 (−0.0017) |
+| **semantic + FUTURE pop · LEAK** | **0.6572 (+0.0234)** | **0.5872 (+0.0541)** |
+
+**Three findings (18–20), written up in full in `ARCHITECTURE.md`:**
+1. **Moving one counting window is worth more than the entire honest system.** On EB-NeRD,
+   identical algorithm, counts from the evaluated window instead of training: AUC
+   **0.4647 → 0.6657, +0.2010**. Semantic beats random by only 0.0344, so **one leaked
+   feature is worth ~4× all the honest modelling of Phases 2–4.** This is the anti-gaming
+   argument in a single number, and it is why leaderboard rank is a poor grading signal.
+2. **A leak is worth most exactly where honest methods are weakest** — +0.2010 on EB-NeRD
+   vs +0.0679 on MIND, a 3× difference in the value of identical cheating, explained by
+   EB-NeRD's catalogue turnover (86.9% of val candidates unclicked in train). Corollary
+   worth stating: **the datasets where leakage is most tempting are the ones where it is
+   hardest to notice**, because no strong honest baseline exists whose absence would look
+   suspicious.
+3. **The legitimate feature buys essentially nothing and its sign flips between datasets**
+   (+0.0001 / −0.0017, both inside the CIs). Real per-candidate signal (3.5× / 0.49×) but
+   it applies to only 0.055% / 0.959% of candidates, and one global positive weight is
+   simply wrong on EB-NeRD where the effect is negative. Reported as-is rather than
+   re-specified per dataset — that *is* the finding.
+
+- [x] **Phase 4 complete.** Q4 (all four sub-requirements) + Q9 (both halves).
 
 ## Next step
+
+**Phase 5 — Q5, scale-up and Codabench submission.** This is the real deadline risk and
+has been flagged as such since Phase 3. Budget 2.5 h. Cloud platform choice (Kaggle vs
+Colab vs Lightning) is the deferred D2 sub-decision and should be taken against the
+memory numbers now measured, not guessed.
+
+Landmines already logged under "Phase 5 landmines found early" above — re-read them before
+writing any code: EB-NeRD's test set has **no `article_ids_clicked` column** (will raise in
+`ingest_ebnerd.load_behaviors`), MIND's test set has **no `-0`/`-1` suffixes** (degrades
+silently and correctly — assert it rather than trusting the coincidence), and EB-NeRD test
+carries an `is_beyond_accuracy` flag affecting the submission format.
+
+<details>
+<summary>Superseded Q9 next-step note</summary>
 
 **Q9 — the anti-gaming ablation and `tests/test_no_leakage.py`.** Everything Q4 requires
 is now built and run.
@@ -533,6 +589,8 @@ is now built and run.
 **Q9's ablation** has its arm already measured and waiting: "has the user already read this
 candidate" is a serving-time feature, clicked **3.5× more** often than average on MIND and
 **0.49×** on EB-NeRD — opposite directions, both outside noise, already leak-checked.
+
+</details>
 
 <details>
 <summary>Superseded slices/bootstrap next-step note</summary>
@@ -811,6 +869,7 @@ we may have already solved it.
 
 | Date | Error | Root cause | Fix chosen | Trade-off accepted |
 |---|---|---|---|---|
+| 2026-08-25 | After a mutation-testing run, `tests/test_ablation.py` kept failing even though the source file was byte-identical to its pre-mutation backup (`diff` clean, `grep` showed the correct line) | Stale `__pycache__`. The mutate→test→restore loop rewrites the `.py` with `cp`, and Python served the **mutated bytecode** rather than recompiling — the restored file's mtime did not look newer to the import cache's check | `find . -name __pycache__ -path '*/newsrec/*' -exec rm -rf {} +` before re-running. Recorded as a standing hazard of the mutation-testing workflow rather than a one-off | None. Worth noting the failure *direction* is benign: a stale cache during the mutation step makes a mutation look **survived** (tests pass), which reads as a test gap and gets investigated. Every mutation reported as *caught* in Phases 3–4 is therefore still valid, since caught means the tests actually failed |
 | 2026-08-25 | `reports/bm25_recall_val_n10.csv` silently lost EB-NeRD's whole-corpus results — noticed only because the consolidated summary table was missing four rows | The output filename contained the split and `n_recent` but **not the dataset or the pool**, so `--datasets mind` wrote to the same path `--datasets ebnerd` had just written. No error, no warning; the numbers were still correct on screen, just gone from disk. The class of bug where output *looks* fine because the wrong thing was overwritten, not corrupted | Put every varying input in the filename: `bm25_recall_{datasets}_{split}_n{N}_{pool}{tag}.csv`, with a comment recording why. Re-ran the four configurations; regenerated numbers matched the originals exactly, which also confirmed reproducibility | None — strictly more correct. Cost ~15 min of re-running MIND. Worth noting the near-miss: had the summary script not existed, the missing rows would likely have gone unnoticed into the design note |
 | 2026-08-25 | `test_first_seen_times_takes_the_minimum` failed with `ComputeError: cannot cast 'Object' type` | Test-construction error, not a code bug: the test passed `np.datetime64` values into `pl.DataFrame`, which Polars treats as opaque Python objects rather than recognising as timestamps | Used Python `datetime` objects, which Polars maps to its native `Datetime` type | None — the production code was never involved; only the fixture was wrong |
 | 2026-08-23 | `python scripts/build_pipeline.py` run from a directory other than the repo root (e.g. `/tmp`) crashed with `FileNotFoundError: configs/mind.yaml` — found because Chaitanya questioned whether the script's `sys.path` fix really made it runnable "from anywhere" | The `sys.path.insert` fix only made the *import* of `newsrec.build` independent of the caller's working directory (via `__file__`, which always resolves to the script's real location). `Path("configs") / ...` and `OUTPUT_DIR = Path("data/processed")` were still plain relative paths, resolved against whatever the shell's cwd happened to be — an inconsistency between two parts of the same file | Introduced one `REPO_ROOT = Path(__file__).resolve().parent.parent` constant and anchored every path in the script to it — `src/`, `configs/`, `data/processed/`, and the `raw_root` value read out of each YAML config | None meaningful — this is strictly more correct with no added complexity; verified by re-running the exact `/tmp` invocation that first exposed it, plus re-checking the happy path and the failure-message path both still work |

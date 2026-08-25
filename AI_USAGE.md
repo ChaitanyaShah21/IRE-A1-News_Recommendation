@@ -69,6 +69,12 @@ Chaitanya's `/model` choice) — noted per-commit in git history, not tracked he
 | `scripts/run_eval_report.py` | AI-generated | Thin entry point for Q4.3 slices + Q4.4 CIs over the re-ranking metrics |
 | `reports/eval_report_*.csv` | Generated output | Not authored; reproducible via the script above |
 
+| `src/newsrec/eval/ablation.py` | AI-generated | Q9's serving-time ablation (D28). Contains a deliberately leaky function, quarantined and asserted un-imported by a test |
+| `tests/test_ablation.py` | AI-generated | R10 adversarial suite, 14 tests. Mutation-tested: 6 bugs reintroduced, all 6 caught |
+| `tests/test_no_leakage.py` | AI-generated | The Q9 deliverable. Mutation-verified: 5 deliberate leaks reintroduced, all 5 caught, including relaxing D19's strict inequality. The EB-NeRD history landmine it tests was found by Chaitanya's earlier D19 discussion insisting availability be label-free as well as temporal |
+| `scripts/run_ablation.py` | AI-generated | Thin entry point for Q9 |
+| `reports/ablation_*.csv` | Generated output | Not authored; reproducible via the script above |
+
 _Appended as files are created._
 
 ## Prompt log
