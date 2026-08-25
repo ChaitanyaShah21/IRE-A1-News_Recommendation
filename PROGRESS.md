@@ -554,6 +554,41 @@ content-based retrieval as such.
 
 - [x] **Phase 4 complete.** Q4 (all four sub-requirements) + Q9 (both halves).
 
+### Phase 5 (in progress)
+- [x] **Pacing settled** (see the box below) — reduced depth, full R6 on the platform fork.
+- [x] **All three Phase 5 landmines verified against the real bundles**, not inherited:
+      EB-NeRD test behaviors has 14 columns and **no `article_ids_clicked`**; MIND test
+      behaviors has **5 fields and 0 matches** for `N[0-9]+-[01]` across 50,000 rows;
+      EB-NeRD test carries `is_beyond_accuracy` as a Boolean.
+- [x] **Both large test bundles were already downloaded and extracted** — 1.5 GB
+      `MINDlarge_test`, 1.8 GB `ebnerd_testset`, 3.4 GB `ebnerd_large`. The largest single
+      item on Phase 5's risk list was already paid, which is what redirected D29.
+- [x] **D29 — run locally, Kaggle named as the fallback.** The D2 sub-decision, finally
+      taken against measured numbers: only the embedding step benefits from a GPU, the
+      data is already here, and the streaming path computes the distinct candidate set
+      over all 13.5 M EB-NeRD test impressions in **1 s at 1.03 GB peak**.
+- [x] **D30 — separate submission store, label column absent rather than empty.**
+      `src/newsrec/submission.py` + `scripts/build_submission_store.py`, writing to
+      `data/processed/submission/`. `test_root` added to both configs.
+- [x] **Two inherited assumptions re-verified at test scale rather than carried forward:**
+      EB-NeRD history chronological ordering (0 out of order across **807,677** users, vs
+      4,714 checked at demo scale) and MIND's constant-history-per-user assumption from D3
+      (0 violations across **484,059** multi-row users, vs 33,617 checked in Phase 1).
+      Candidate coverage is 100% on both datasets — 0 missing articles.
+- [x] **Submission article stores built**: 120,961 MIND + 125,541 EB-NeRD articles.
+- [x] **15 new adversarial tests, 218 passing overall.** Mutation-tested: 10 bugs
+      reintroduced, **9 caught, and the 10th was a genuine gap** — deleting the
+      `assert_mind_test_unlabeled` *call* from the reader left every test passing, because
+      they all exercised the guard function directly. A guard nothing proves is wired up is
+      decoration. Test added; re-mutated; now caught.
+      *(Separately: the mutation harness itself was broken on the first run — `python` was
+      not on PATH, so no mutation ever applied and every result read "MISSED". A broken
+      verifier produces failure-shaped output. Worth remembering.)*
+- [ ] Test-corpus embeddings — **running**, ~80 min projected (R8 flag: over the ~43 min
+      `SCALE_NOTES.md` estimate, because concurrent work dropped throughput from 96 to
+      ~50 articles/s).
+- [ ] Chunked prediction generation, submission formats, two Codabench submissions.
+
 ## Next step
 
 **Phase 5 — Q5, scale-up and Codabench submission.** This is the real deadline risk and
@@ -561,15 +596,17 @@ has been flagged as such since Phase 3. Budget 2.5 h. Cloud platform choice (Kag
 Colab vs Lightning) is the deferred D2 sub-decision and should be taken against the
 memory numbers now measured, not guessed.
 
-### ⚠️ Settle this in the first exchange of the new session
+### ✅ Pacing for Phases 5–6 — settled 2026-08-25
 
-**Pacing for Phases 5–6 is an open question, not a decided one.** At the end of Phase 4
-Claude recommended cutting teaching depth to stated defaults for Phase 5, reserving full
-R6 treatment only for the cloud-platform choice, because Phase 5 is the deadline risk.
-Chaitanya replied "proceed as before", which is genuinely ambiguous between *"keep the
-same depth"* and *"go ahead with the reduced-depth plan"*. **Ask; do not assume either
-way.** The honest framing: Phase 4 ran 5.5 h against a 4 h budget, Phases 5+6 have 4.5 h
-budgeted between them, and the deadline is 27 Aug.
+Asked in the first exchange, per the note this replaces. **Chaitanya chose reduced depth
+with full R6 treatment reserved for the cloud-platform fork.** Everywhere else: the
+default is stated with its reasoning in a line or two and the work proceeds. Living
+documents and the decision log stay complete regardless — that was never the part being
+traded away.
+
+Reasoning given at the time: Phase 4 ran 5.5 h against a 4 h budget, Phases 5+6 have 4.5 h
+between them, and Phase 5 contains genuinely less new *concept* than Phases 2–4 — it is
+mostly bundle-reading, chunked streaming and submission formats.
 
 ### Landmines — re-read before writing any Phase 5 code
 

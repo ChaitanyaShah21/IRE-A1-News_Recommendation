@@ -75,6 +75,12 @@ Chaitanya's `/model` choice) — noted per-commit in git history, not tracked he
 | `scripts/run_ablation.py` | AI-generated | Thin entry point for Q9 |
 | `reports/ablation_*.csv` | Generated output | Not authored; reproducible via the script above |
 
+| `src/newsrec/submission.py` | AI-generated, human-decided | Phase 5 / Q5 readers for the two unlabeled leaderboard bundles (D30). The platform fork it sits under (D29) was chosen by Chaitanya against measured numbers. Handles all three Phase 5 landmines, each verified against the real bundles first |
+| `scripts/build_submission_store.py` | AI-generated | Thin entry point; checks every requested bundle before writing any of them, so a missing second dataset does not surface after the first is on disk |
+| `tests/test_submission.py` | AI-generated | R10 adversarial suite, 15 tests, all on constructed files the real bundles do not contain. Mutation-tested: 10 bugs reintroduced, 9 caught and **the 10th a genuine gap** (the guard's *call site* was untested) — test added, re-mutated, now 10/10 |
+| `configs/{mind,ebnerd}.yaml` | AI-generated, human-edited | `test_root` added in Phase 5, kept as a separate key from `raw_root` so the leaderboard test set cannot be confused with D7's local test split |
+| `data/processed/submission/*` | Generated output | Not authored; gitignored, reproducible via the scripts above |
+
 _Appended as files are created._
 
 ## Prompt log
