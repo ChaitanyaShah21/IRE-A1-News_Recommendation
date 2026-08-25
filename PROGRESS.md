@@ -22,8 +22,9 @@ whether it actually worked "from anywhere" — see error log).
 recall@K for K ∈ {50, 100, 200}, both datasets, both candidate pools, 38/38 tests passing.
 Headline finding below.
 
-**Phase 4 — Q4 evaluation harness: in progress.** Q4.1 (the four ranking metrics) is
-done and mutation-tested; 102 tests passing. Next is Q4.2, the re-ranking runner.
+**Phase 4 — Q4 evaluation harness: in progress.** Q4.1 (metrics) and Q4.2 (the
+re-ranking runner, four scorers, both datasets) are done and mutation-tested; 123 tests
+passing. Next is Q4.3, beyond-accuracy, where the diversity-basis fork gets raised.
 
 **Phase 3 — Q3 semantic retrieval: complete**, tagged `phase-3-complete`. All five
 sub-requirements done: 77,015 article embeddings computed and stored (Q3.1), exact
@@ -373,8 +374,61 @@ content-based retrieval as such.
       replaced by argsort stability, MRR off-by-one, DCG discount off-by-one — **all 7
       caught.** The AUC suite implements the O(P·N) pair definition independently, so an
       error in the rank algebra cannot be made in both places at once.
+- [x] **D24** — two baselines added alongside BM25 and semantic: **random** (seeded per
+      impression id, so a slice scores identically to the whole set) and **popularity**
+      (train-window click count). MRR and nDCG have no natural zero point the way AUC's
+      0.5 does. `train_click_counts` **raises** on any split but train rather than trusting
+      the caller — counting val clicks would let the baseline see its own answers.
+- [x] **Q4.2 done** — `src/newsrec/eval/rerank.py`, `scripts/run_rerank_eval.py`.
+      **21 new adversarial tests, 123 passing overall.** Mutation-tested: 7 bugs
+      reintroduced, 6 caught; the 7th ("popularity returns a view") was a **bad mutation,
+      not a test gap** — NumPy fancy indexing already copies, so it changed nothing.
+      Runtime: MIND 51,205 impressions in 136 s, EB-NeRD 17,749 in 1.2 s.
+      Scorer verified against an independent per-impression computation before any number
+      was believed (max deviation 1.9e-06, float32 noise), and the random arm lands at
+      AUC 0.5007 / 0.4987 — the harness checking itself.
+
+**Q4.2 headline (val, macro, has-query slice, pessimistic ties):**
+
+| Dataset | random | popularity | BM25 | semantic |
+|---|---|---|---|---|
+| MIND — AUC | 0.5007 | 0.5423 | 0.5492 | **0.6338** |
+| MIND — nDCG@5 | 0.2264 | 0.2278 | 0.2760 | **0.3316** |
+| EB-NeRD — AUC | 0.4987 | **0.4647** | 0.4966 | **0.5331** |
+| EB-NeRD — nDCG@5 | 0.3443 | 0.0939 | 0.3418 | **0.3730** |
+
+**Three findings, written up in full in `ARCHITECTURE.md`:**
+1. **BM25 cannot re-rank EB-NeRD at all** (AUC 0.4966 vs random 0.4987) even though it
+   held a 1.21× retrieval lift at K=50. Retrieval and re-ranking are different jobs: the
+   platform's own recommender has already spent the easy signal, so everything in
+   `article_ids_inview` is already plausible and lexical overlap no longer separates it.
+2. **On EB-NeRD, train-window popularity predicts clicks in the *wrong* direction**
+   (AUC 0.4647). 86.9% of val candidates were never clicked in train, and one that *was*
+   is disproportionately stale. Third independent route to Phase 2's freshness finding.
+3. **The tie policy mattered exactly once, and the number says where.** Pessimistic-vs-
+   optimistic nDCG@10 gap is ≤0.0013 for BM25 and semantic — so no conclusion rests on it,
+   the sentence D23 existed to produce — but **+0.5012** for EB-NeRD popularity, which is
+   mostly a constant scorer. Reported optimistically it would have topped the table.
+- [x] Measured and banked for Q9 rather than folded into the score: a candidate already in
+      the user's history is clicked **3.5× more** often than average on MIND and **0.49×**
+      on EB-NeRD — opposite directions, both outside noise, and leak-checked before being
+      believed. "Has the user already read this" is a **serving-time feature**, so it is an
+      ablation arm, not a scoring hack.
+- [x] **Landmine for `tests/test_no_leakage.py`:** EB-NeRD's **validation history file
+      contains 99.52% of train-window clicks** (22,143/22,249). Harmless as used (train
+      precedes val), catastrophic if val history were ever pointed at train impressions.
 
 ## Next step
+
+**Q4.3 — beyond-accuracy metrics** (intra-list diversity, novelty, coverage), where the
+flagged diversity-basis fork gets raised: measuring diversity in the embedding space grades
+semantic retrieval by the exact quantity it minimises.
+
+**Remaining in Phase 4:** Q4.3 beyond-accuracy (diversity fork) · slices · bootstrap 95%
+CIs · Q9 ablation + `tests/test_no_leakage.py`.
+
+<details>
+<summary>Superseded Q4.2 next-step note</summary>
 
 **Q4.2 — the re-ranking runner.** Score each val impression's own `candidate_article_ids`
 with both scorers (BM25 weights from `bm25.py`, cosine from `embeddings.parquet`) and feed
@@ -383,6 +437,8 @@ that D19's availability filter is **not** applicable here — the platform alrea
 candidates, so restricting them further would be re-deciding a decision the log records.
 
 **Then Q4.3 beyond-accuracy**, where the flagged diversity-basis fork gets raised.
+
+</details>
 
 **Remaining in Phase 4:** Q4.2 re-ranking runner · Q4.3 beyond-accuracy (diversity fork) ·
 slices · bootstrap 95% CIs · Q9 ablation + `tests/test_no_leakage.py`.
@@ -568,6 +624,7 @@ just insurance until that's found.
 | EB-NeRD | demo | `data/raw/ebnerd/ebnerd_demo/` | ✅ downloaded, valid parquet confirmed (11,777 articles, 24,724 train behaviors, 1,590 train history rows — a different, smaller bundle than the "large" one the provided notebook explored, so these counts are expected to differ) |
 | EB-NeRD | small | `data/raw/ebnerd/` | ⬜ not downloaded (not needed — demo for dev, large for the leaderboard) |
 | EB-NeRD | large | `data/raw/ebnerd/ebnerd_large/` | ✅ downloaded 2026-08-24, verified — 12,063,890 train + 12,566,385 validation behaviors, 125,541 articles. 3.4 GB. Schema identical to demo. |
+| results | Q4.2 re-ranking | `reports/rerank_{mind,ebnerd}_val_n10.parquet` | Gitignored (`*.parquet`), 4 MB total. Per-impression metric values kept intact for Q4.4's bootstrap. Regenerate with `python scripts/run_rerank_eval.py` |
 | EB-NeRD | testset | `data/raw/ebnerd/ebnerd_testset/ebnerd_testset/` (note the **doubled** directory name, from the zip's own layout) | ✅ downloaded 2026-08-24, verified — 13,536,710 test behaviors (spec: 13.5M). 1.8 GB. Schema differs from demo — see the Phase 5 landmines under Open questions. |
 
 Disk after these: 6.8 GB of raw data, 901 GB free — not a constraint. The `__MACOSX/`

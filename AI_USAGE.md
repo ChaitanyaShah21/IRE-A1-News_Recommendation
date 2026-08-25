@@ -53,6 +53,11 @@ Chaitanya's `/model` choice) — noted per-commit in git history, not tracked he
 | `src/newsrec/eval/metrics.py` | AI-generated, human-decided | Q4.1 AUC/MRR/nDCG. The tie policy (D23) was chosen by Chaitanya from measured tie rates; AUC uses the rank identity rather than the O(P·N) pair loop |
 | `tests/test_metrics.py` | AI-generated | R10 adversarial suite, 28 tests. Verified by mutation testing: 7 deliberate bugs reintroduced (uncapped IDCG, inverted tiebreak, `rankdata` tie method, removed NaN guard, argsort-stability tiebreak, MRR off-by-one, DCG discount off-by-one) and every one was caught |
 
+| `src/newsrec/eval/rerank.py` | AI-generated, human-decided | Q4.2 four scorers. D24's baselines chosen by Chaitanya. The decisions NOT to apply D15/D19 here, and to bank the seen-before signal for Q9 instead of folding it into the score, follow his earlier D17 reasoning |
+| `tests/test_rerank.py` | AI-generated | R10 adversarial suite, 21 tests, alignment-focused. Mutation-tested: 7 bugs reintroduced, 6 caught, and the 7th identified as a no-op mutation rather than a test gap |
+| `scripts/run_rerank_eval.py` | AI-generated | Thin entry point for Q4.2; filename carries every varying input per the Q2 overwrite error-log entry |
+| `reports/rerank_*.parquet` | Generated output | Not authored; gitignored, regenerable via the script above |
+
 _Appended as files are created._
 
 ## Prompt log

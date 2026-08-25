@@ -295,3 +295,39 @@ carries no click signal (0.5017 / 0.4961 against a uniform 0.5) rather than assu
 Generalises the Phase 3→4 lesson: **a number coming out fine is not evidence the mechanism
 is sound** — here, a fine-looking MRR would have been produced by a leaky tiebreak just as
 readily as by a good ranker.
+
+---
+
+## Phase 4 — Q4.2, what re-ranking measures that retrieval does not
+
+Not a quizzed concept; recorded because the result reframed something we thought we
+already knew.
+
+Phases 2 and 3 concluded "BM25 is weak on EB-NeRD" (1.07–1.21× lift over random). Q4.2
+found something stronger and different: **BM25 is at exactly chance when re-ranking**
+(AUC 0.4966 against random's 0.4987). Those are not the same statement, and the gap
+between them is the idea worth keeping:
+
+> Retrieval and re-ranking are different jobs on different pools. Finding the right
+> neighbourhood among 11,777 articles is a task lexical overlap can partly do. Ordering
+> the ~9 the platform *already selected* is a task where the easy signal has been spent —
+> everything in `article_ids_inview` is plausible for that user by construction, so
+> "similar to what they read" no longer separates plausible from clicked.
+
+Generalised: **a candidate generator upstream of you changes what your own signal is worth.**
+A method's score on a pool it didn't choose says little about its score on a pool someone
+else pre-filtered in its favour.
+
+**Verification habit reinforced.** The result was checked before it was believed, in two
+independent ways: the scorer was compared against a per-impression computation written
+separately (max deviation 1.9e-06), and the random arm was confirmed to land on AUC 0.5007
+/ 0.4987. The second is the cheap one worth remembering — **a baseline whose correct value
+you know in advance is a test of the whole harness**, not just of the baseline. Had random
+come out at 0.62, every other row would have been unreadable.
+
+Related, and the same shape as the Phase 3→4 quiz lesson: EB-NeRD's popularity baseline
+scores *below* chance (0.4647). The tempting reading is "the baseline is broken". The
+measured cause is that 86.9% of val candidates were never clicked in train, so surviving
+train popularity is a staleness marker. **A number moving the wrong way is a finding when
+you can name the mechanism, and a bug when you cannot** — the direction alone does not
+distinguish them.
