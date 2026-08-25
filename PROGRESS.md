@@ -347,6 +347,30 @@ is computed from `candidate_article_ids` (what was shown) and **never** from
 leakage. Both conditions now live in one place — `newsrec/retrieval/availability.py` —
 which is what the test should target.
 
+**⚠️ Decision point to raise early in Phase 4 — do NOT default to it silently.**
+Intra-list diversity is conventionally the mean pairwise distance between the retrieved
+articles' *embeddings*. Measured in the same embedding space semantic retrieval searched,
+it grades that method by the exact quantity it explicitly minimises — semantic will score
+badly almost **by construction**, and the design note would then report a tautology as a
+finding. Options to put to Chaitanya: (a) use a different diversity basis — both datasets
+have a `category` column, so category overlap is the obvious candidate; (b) keep the
+embedding-based metric and state the caveat explicitly; (c) report both. Found while
+grading the Phase 3→4 quiz, not while writing Phase 4 code.
+
+**Concrete beyond-accuracy finding already in hand.** MIND user `mind:U13132` read three
+political stories and one Starbucks item; semantic retrieval returned five near-duplicate
+Popeyes chicken-sandwich articles and nothing political. That is a diversity failure, not
+an accuracy failure, and it is the qualitative example Q4's numbers should explain.
+
+- [x] **Phase 3→4 recall quiz done 2026-08-25** (1 partial, 1 re-taught, 1
+      right-answer-wrong-reasoning — see `LEARNING.md`). **A new session does not need to
+      repeat it.** The re-taught point is load-bearing: *"cosine contains no time term" is
+      a structural fact about the formula, so no measurement can contradict it* — a high
+      freshness number would have been topic correlation riding along, which is accidental
+      and untunable. Generalised as: **a number moving in the direction you wanted never
+      tells you why it moved** — flagged for the design note as the most transferable idea
+      in the project.
+
 <details>
 <summary>Superseded Q3.3 next-step note</summary>
 
