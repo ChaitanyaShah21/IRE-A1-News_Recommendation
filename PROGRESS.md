@@ -225,12 +225,41 @@ reporting it without the baseline column would have been materially misleading.
       favours raw 2.05% vs 1.84%; MIND available favours binary at K=200 but raw at
       K=50; EB-NeRD tied). Cheap to keep, informative to have measured.
 
+- [x] Phase 2→3 recall quiz done 2026-08-25 (2 of 3 solid, one re-taught — see
+      `LEARNING.md`). **A new session does not need to repeat it.**
+
 ## Next step
 
 **Phase 3 — Q3, semantic retrieval (embeddings).** Teach embeddings and approximate
-nearest neighbour search per R1 before any code, then decide: EB-NeRD's provided vectors
-vs computing our own (the designated drop-first item if we slip), and where embeddings
-live in the store (the D3 sub-decision deferred to this phase).
+nearest neighbour search per R1 before any code, then take the model decision.
+
+**⚠️ The old "drop-first" plan is retired — it rested on a false premise.** Phase 0 said
+we could fall back to "EB-NeRD's provided embeddings instead of computing our own."
+Verified 2026-08-25 against the actual files: **neither dataset ships article-text
+embeddings we can just load.**
+- MIND ships `entity_embedding.vec` — 26,904 **TransE knowledge-graph entity** vectors,
+  100-dim, keyed by Wikidata IDs (`Q41`). Not article vectors. Getting an article vector
+  means averaging the entities it mentions, and articles with no recognised entities get
+  nothing.
+- EB-NeRD's `articles.parquet` has **no embedding column at all** (21 columns checked).
+  Its provided article embeddings are separate artifact downloads
+  (`Ekstra_Bladet_word2vec.zip`, `google_bert_base_multilingual_cased.zip`) which the
+  spec itself marks *"(optional)"* and which are **not downloaded**.
+
+The spec permits either route — Q3 says "using the provided article embeddings **(or
+compute your own using BERT/XLM-RoBERTa)**" and Q3.1 says "**Compute or load**". But
+mixing routes across datasets (provided BERT for EB-NeRD, averaged entity vectors for
+MIND) would make **Q3.5's cross-dataset comparison uninterpretable** — the same argument
+that killed per-language stemming in D11 and that the random-baseline column caught in
+D19. So computing our own with **one multilingual model for both** is likely the stronger
+answer, not the expensive luxury the old plan assumed.
+
+**Real risk to plan around:** `torch` is a ~2 GB install and `scipy` alone took over ten
+minutes on this connection. Bring a lighter no-torch fallback alongside the
+sentence-transformers route when presenting the options.
+
+**Also still open for Phase 3:** where embeddings live in the store — the D3 sub-decision
+deferred to this phase.
 
 **Constraint inherited from D19, do not lose it:** Q3.5 compares lexical vs semantic, and
 that comparison is only meaningful if both retrieve from the **same candidate pool**. So

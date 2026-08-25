@@ -92,6 +92,43 @@ position**, not with the vocabulary in alphabetical order. Three arrays, three j
 
 ---
 
+## Phase 2 → Phase 3 recall check (2026-08-25)
+
+Three questions: what breaks if queries used title+abstract like the index does; why
+EB-NeRD's 2.45% → 7.27% is not a 3× improvement; and the two leak-safety properties of
+`first_seen < T`. **Two solid, one re-taught.**
+
+**Q1 — needed re-teaching.** Answer had the mechanism ("longer query") but framed the
+consequence as diminishing returns and "not significant". The correction: it undoes
+**D12**, and the failure mode is **topic drift**, not dilution — diminishing returns means
+extra input stops helping, drift means it actively points somewhere wrong. Measured on our
+own corpus: mean title 11.2 tokens vs mean abstract 36.1 on MIND, so a 10-article query
+goes **112 → 472 tokens, 4.2×**. Those extra tokens are peripheral entities and
+boilerplate from the same articles, so the query stops describing what the user wants and
+starts describing everything adjacent to what they read. And because **BM25 has no time
+term**, no parameter can undo it afterwards. Stated explicitly at the time: this is
+mechanism, not evidence — we did not run the ablation, and saying "it is worse" without
+the run would be overclaiming.
+
+**Q2 — correct**, including the key standard: to claim a 3× improvement, the *lift over
+random* would have had to triple. One causal link tightened: the random baseline rose
+because the **pool shrank** (11,777 → ~2,963; random recall@200 is just `200/pool_size`),
+not directly because clicks are recent. Keeping those separate matters — the baseline
+would rise identically for any filter that shrank the pool, including a useless one, which
+is exactly why the baseline column is the check.
+
+**Q3 — (a) correct, (b) half.** (a) sharpened: the problem with `<=` isn't only that the
+article "wasn't there before", it's that our *knowledge it exists* comes from the very
+impression being predicted — circular. (b) had the temporal half (the predicate only
+admits facts true before T) but missed the second, which is the one Q9 actually grades:
+`first_seen` is computed from `candidate_article_ids` — what was **shown** — and never
+from `clicked_article_ids`. Availability derived from clicks would still satisfy "only
+uses the past" and still be leakage, because the pool would be pre-selected by the
+answers. **Both conditions are required: temporal AND label-free.** Argue only the first
+in the design note and a careful grader will ask about the second.
+
+---
+
 ## Phase 1 — Unified schema
 
 Required reading for this concept was done directly against ground truth rather than
