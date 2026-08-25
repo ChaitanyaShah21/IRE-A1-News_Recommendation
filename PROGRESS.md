@@ -24,7 +24,9 @@ Headline finding below.
 
 **Phase 4 — Q4 evaluation harness: in progress.** Q4.1 (metrics) and Q4.2 (the
 re-ranking runner, four scorers, both datasets) are done and mutation-tested; 123 tests
-passing. Next is Q4.3, beyond-accuracy, where the diversity-basis fork gets raised.
+passing.
+Q4.3 (beyond-accuracy, both diversity bases, retrieval + re-ranking) is done too; 146
+tests passing. Next are the slices, then Q4.4's bootstrap CIs, then Q9.
 
 **Phase 3 — Q3 semantic retrieval: complete**, tagged `phase-3-complete`. All five
 sub-requirements done: 77,015 article embeddings computed and stored (Q3.1), exact
@@ -417,8 +419,67 @@ content-based retrieval as such.
 - [x] **Landmine for `tests/test_no_leakage.py`:** EB-NeRD's **validation history file
       contains 99.52% of train-window clicks** (22,143/22,249). Harmless as used (train
       precedes val), catastrophic if val history were ever pointed at train impressions.
+- [x] Beyond-accuracy taught (analogy → ASCII formulas → comprehension check).
+      **2 of 3 parts right, novelty corrected** — see `LEARNING.md`. The correction is
+      load-bearing: **diversity and coverage are bounded in [0,1] and readable absolutely,
+      novelty is not** — MIND's range is 6.13–18.20 and EB-NeRD's 8.01–15.16, so a raw
+      novelty figure is meaningless alone and **the two datasets' novelty numbers are not
+      comparable to each other.** Second instance in one phase of a metric silently
+      carrying the dataset's scale (AUC's rack-size sensitivity was the first), so it is a
+      pattern for the design note rather than a one-off.
+      Also established: **a purely random recommender scores best on all three of these
+      metrics**, so they price what a method gave up and only mean something read against
+      the accuracy table.
+- [x] **D25** — both flagged forks resolved. **(A)** headline beyond-accuracy measured on
+      **retrieval** output, with re-ranking computed too so the candidate-pool cap is shown
+      rather than asserted; only **6.8% of MIND's corpus / 19.2% of EB-NeRD's** ever appears
+      in any val candidate list. **(B)** **both** diversity bases reported — embedding
+      cosine distance and category distance.
+- [x] **Q4.3 done** — `src/newsrec/eval/beyond_accuracy.py`,
+      `scripts/run_beyond_accuracy.py`. **23 new adversarial tests, 146 passing overall.**
+      Both diversity metrics use closed forms instead of pairwise loops, each checked
+      against a brute-force implementation written separately in the tests.
+      Mutation-tested: **7 bugs reintroduced, all 7 caught** (self-terms left in the ILD
+      closed form, category-ILD sign inverted, novelty smoothing removed, novelty sign
+      flipped, coverage counting positions instead of articles, short lists returning 0.0
+      instead of NaN, category same-pair count off-by-one).
+      Results in `reports/beyond_accuracy_{mind,ebnerd}_val_k10.csv`.
+
+**Four findings (9–12), written up in full in `ARCHITECTURE.md`:**
+1. **The embedding basis overstates semantic's diversity deficit on both datasets and
+   reverses its sign on EB-NeRD.** semantic ÷ bm25: MIND 0.784 (embed) vs 0.849 (category);
+   EB-NeRD **0.544 (embed) vs 1.041 (category)**. Reported conventionally we would have
+   written "semantic produces markedly less diverse lists" — false in direction on EB-NeRD.
+   The honest statement is the pair: semantic's lists are tightly packed in embedding space
+   while spanning a comparable range of *categories*, i.e. it repeats **within** topics.
+2. **Coverage is where methods separate — by three orders of magnitude.** MIND retrieval:
+   popularity **0.02%** (~13 articles for all 50,000 users), semantic 53.21%, bm25 51.02%,
+   random 99.96%. Direction flips by dataset: semantic covers slightly *more* than BM25 on
+   MIND, less than *half* as much on EB-NeRD (14.44% vs 31.13%).
+3. **Novelty barely discriminates between content methods**, because 88.2% of MIND's corpus
+   was never clicked in training so almost anything retrieved is "novel". Still worth
+   reporting: it is positive evidence that neither BM25 nor semantic has a popularity bias.
+4. **Fork A demonstrated, not argued.** On re-ranking, four completely different scorers
+   land within 0.4 points of each other on EB-NeRD coverage (17.75–18.17%). On retrieval
+   the same four span 0.02%–99.96%.
 
 ## Next step
+
+**Q4.3 (remainder) — slices**, then **Q4.4 bootstrap 95% CIs**, then **Q9**.
+
+At least one slice is required; cold-start-vs-warm is already half-built (`has_query` and
+`history_len` are carried per impression in the rerank parquet). Head-vs-tail articles is
+the natural second, and the train click counts needed for it already exist.
+
+**Coverage needs care in the bootstrap:** it is a property of the whole run, not a
+per-impression value, so it must be **recomputed inside each resample** — the mean of
+per-list coverages is not the coverage of the union (there is a test pinning exactly this).
+
+**Remaining in Phase 4:** slices · bootstrap 95% CIs · Q9 ablation +
+`tests/test_no_leakage.py`.
+
+<details>
+<summary>Superseded Q4.3 next-step note</summary>
 
 **Q4.3 — beyond-accuracy metrics** (intra-list diversity, novelty, coverage), where the
 flagged diversity-basis fork gets raised: measuring diversity in the embedding space grades
@@ -426,6 +487,8 @@ semantic retrieval by the exact quantity it minimises.
 
 **Remaining in Phase 4:** Q4.3 beyond-accuracy (diversity fork) · slices · bootstrap 95%
 CIs · Q9 ablation + `tests/test_no_leakage.py`.
+
+</details>
 
 <details>
 <summary>Superseded Q4.2 next-step note</summary>

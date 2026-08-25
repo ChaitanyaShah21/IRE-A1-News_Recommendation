@@ -58,6 +58,11 @@ Chaitanya's `/model` choice) — noted per-commit in git history, not tracked he
 | `scripts/run_rerank_eval.py` | AI-generated | Thin entry point for Q4.2; filename carries every varying input per the Q2 overwrite error-log entry |
 | `reports/rerank_*.parquet` | Generated output | Not authored; gitignored, regenerable via the script above |
 
+| `src/newsrec/eval/beyond_accuracy.py` | AI-generated, human-decided | Q4.3. D25's two forks (which output to measure, which diversity basis) chosen by Chaitanya. Both diversity metrics use closed forms; the tests keep brute-force versions to check them against |
+| `tests/test_beyond_accuracy.py` | AI-generated | R10 adversarial suite, 23 tests. Mutation-tested: 7 bugs reintroduced, all 7 caught |
+| `scripts/run_beyond_accuracy.py` | AI-generated | Thin entry point for Q4.3; runs both the retrieval and re-ranking outputs so D25's candidate-pool cap is shown rather than asserted |
+| `reports/beyond_accuracy_*.csv` | Generated output | Not authored; reproducible via the script above |
+
 _Appended as files are created._
 
 ## Prompt log
