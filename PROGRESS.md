@@ -561,11 +561,47 @@ has been flagged as such since Phase 3. Budget 2.5 h. Cloud platform choice (Kag
 Colab vs Lightning) is the deferred D2 sub-decision and should be taken against the
 memory numbers now measured, not guessed.
 
-Landmines already logged under "Phase 5 landmines found early" above — re-read them before
-writing any code: EB-NeRD's test set has **no `article_ids_clicked` column** (will raise in
-`ingest_ebnerd.load_behaviors`), MIND's test set has **no `-0`/`-1` suffixes** (degrades
-silently and correctly — assert it rather than trusting the coincidence), and EB-NeRD test
-carries an `is_beyond_accuracy` flag affecting the submission format.
+### ⚠️ Settle this in the first exchange of the new session
+
+**Pacing for Phases 5–6 is an open question, not a decided one.** At the end of Phase 4
+Claude recommended cutting teaching depth to stated defaults for Phase 5, reserving full
+R6 treatment only for the cloud-platform choice, because Phase 5 is the deadline risk.
+Chaitanya replied "proceed as before", which is genuinely ambiguous between *"keep the
+same depth"* and *"go ahead with the reduced-depth plan"*. **Ask; do not assume either
+way.** The honest framing: Phase 4 ran 5.5 h against a 4 h budget, Phases 5+6 have 4.5 h
+budgeted between them, and the deadline is 27 Aug.
+
+### Landmines — re-read before writing any Phase 5 code
+
+Logged under "Phase 5 landmines found early" above:
+1. EB-NeRD's test set has **no `article_ids_clicked` column** — `ingest_ebnerd.load_behaviors`
+   selects it unconditionally and will raise `ColumnNotFoundError`. Only the *testset* path
+   needs changing; `ebnerd_large`'s schema is byte-identical to demo's.
+2. MIND's test set has **no `-0`/`-1` click suffixes** — `load_behaviors` degrades
+   *correctly but silently* (the strip becomes a no-op, the `-1` filter yields empty
+   clicked lists, which is what D3 specifies for unlabeled rows). **Assert it** rather than
+   relying on the coincidence.
+3. EB-NeRD test carries an **`is_beyond_accuracy` flag** (200,000 rows true) — the RecSys
+   2024 separately-scored subset. Check the Codabench rules before generating predictions.
+
+### Measured scale facts (see `SCALE_NOTES.md` for the full entry)
+
+**The re-ranking path breaks on object overhead, not compute.** `build_candidate_set` runs
+at 18.5 µs/impression — EB-NeRD's 13.5 M test impressions is only **~4.2 min**. But the
+path holds *three* parallel lists of one small NumPy array per impression, at ~112 bytes
+of header each, so 13.5 M impressions is **~4.5 GB of pure overhead** against 0.65 GB of
+actual data. **Phase 5 must chunk the test split and write predictions incrementally**,
+never materialising the whole split.
+
+**Embedding the test corpora is ~43 min of CPU**, one-off: MIND test ships 120,961 articles
+and EB-NeRD large 125,541, at the measured 96 articles/s. This is the only part of the
+pipeline a GPU would meaningfully help, so it is a direct input to the platform choice.
+
+### What Phase 5 reuses unchanged
+
+`rerank.py`'s four scorers, `metrics.py`, `availability.py`, and both retrieval modules all
+work on any split — nothing is val-specific. The submission task **is** the re-ranking task
+Q4.2 already built, which is why Q4 fed Phase 5 directly rather than being a detour.
 
 <details>
 <summary>Superseded Q9 next-step note</summary>
