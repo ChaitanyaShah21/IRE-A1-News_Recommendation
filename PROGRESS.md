@@ -647,7 +647,17 @@ content-based retrieval as such.
       MIND 2,370,727 lines / 4.1 min; EB-NeRD 13,536,710 lines / 6.3 min. Confirmed the
       rankings actually changed (34,600 of 50,000 sampled MIND lines differ).
       Files: `reports/submissions/{mind,ebnerd}_semantic_n100.zip`.
-- [ ] **Chaitanya to do:** upload both `_n100` zips, screenshot both leaderboards.
+- [x] **D31 confirmed on the leaderboard: MIND AUC 0.6037 → 0.6191, rank 62 → 54 of 90.**
+      Predicted +0.0151 from val, delivered **+0.0154** — agreement to 0.0003. Absolute
+      levels differ by ~0.030 (val is an easier, earlier window) but the *delta* transfers,
+      which is the property that makes offline tuning valid.
+- [x] **Engineering benchmarks measured** (`scripts/benchmark_engineering.py`) after the
+      course email named latency/throughput and alternative comparison as the grading
+      criterion. Results in `SCALE_NOTES.md`.
+- [x] **Q6 design note written** — `reports/design_note.md`, ~1,950 words, balanced
+      ~2 pages engineering / ~2 pages findings per Chaitanya's call.
+- [ ] **Chaitanya to do:** upload the EB-NeRD `_n100` zip if not already; screenshot both
+      leaderboards into `reports/figures/`.
 - [ ] **Q6 design note (≤4 pages) — NOT STARTED. The only graded deliverable at zero.**
 
 ### Phase 5b process errors, recorded so they are not repeated
