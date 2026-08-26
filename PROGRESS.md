@@ -730,6 +730,7 @@ Logged under "Phase 5 landmines found early" above:
    relying on the coincidence.
 3. EB-NeRD test carries an **`is_beyond_accuracy` flag** (200,000 rows true) — the RecSys
    2024 separately-scored subset. Check the Codabench rules before generating predictions.
+   **Corrected 2026-08-26:** the rules were checked and say nothing about this flag. The count (200,000 of 13,536,710) is verified; the *meaning* was inferred, never read. We predict every row, which the official example submission confirms is correct.
 
 ### Measured scale facts (see `SCALE_NOTES.md` for the full entry)
 
@@ -1037,7 +1038,7 @@ rediscover under deadline. Not fixed yet — Phase 5 work, logged so it isn't re
    which is exactly what D3's schema specifies for unlabeled test rows. Worth an explicit
    assertion in Phase 5 rather than relying on the coincidence.
 3. **EB-NeRD test carries a new `is_beyond_accuracy` flag**: 200,000 rows true,
-   13,336,710 false. That is the RecSys 2024 challenge's separately-scored
+   13,336,710 false. That was assumed to be the RecSys 2024 challenge's separately-scored
    beyond-accuracy subset — it affects the submission format, so check the Codabench
    rules before generating predictions.
 4. MIND test history is 2,453 empty-history rows per 200,000 sampled (~1.2% cold-start,
