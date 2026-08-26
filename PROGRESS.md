@@ -631,7 +631,36 @@ content-based retrieval as such.
       (`prediction.txt` / `predictions.txt`), archive integrity OK, and line counts read
       back out of the compressed files (2,370,727 / 13,536,710).
 - [x] **240 tests still passing** after the Phase 5 additions.
-- [ ] **Chaitanya to do:** upload both zips, screenshot both leaderboards.
+- [x] **First MIND leaderboard result: AUC 0.6037, rank 62/90** (val 0.6338 predicted it
+      closely, so val is a trustworthy offline proxy).
+- [x] **D31 — N re-tuned for re-ranking, 10 → 100.** +0.0151 val AUC on MIND
+      (0.6338 → 0.6489), +0.0082 on EB-NeRD (0.5331 → 0.5413), saturating by N=100.
+      D12's N=10 was chosen for *retrieval*, to fight topic drift in a whole-corpus
+      search; re-ranking has no drift to fight, so the value was silently wrong. The
+      §6 retrieval-vs-re-ranking trap, appearing as a hyperparameter.
+- [x] **Two unexpected results kept** (see D31): max-similarity **loses on MIND, wins on
+      EB-NeRD**, explained by EB-NeRD's longer histories and lower nearest-neighbour
+      cosines; and a scorer worse alone can still add in combination (+0.0056).
+- [x] **Popularity dropped from fusion on a transferability check**, not a hunch: only
+      **5.7%** of MIND test candidates have a train-window click count.
+- [x] **Both submissions regenerated at N=100 and validated clean.**
+      MIND 2,370,727 lines / 4.1 min; EB-NeRD 13,536,710 lines / 6.3 min. Confirmed the
+      rankings actually changed (34,600 of 50,000 sampled MIND lines differ).
+      Files: `reports/submissions/{mind,ebnerd}_semantic_n100.zip`.
+- [ ] **Chaitanya to do:** upload both `_n100` zips, screenshot both leaderboards.
+- [ ] **Q6 design note (≤4 pages) — NOT STARTED. The only graded deliverable at zero.**
+
+### Phase 5b process errors, recorded so they are not repeated
+1. **The first fusion search ran >1 h and was killed.** It evaluated seven metrics per
+   weight combination when the search reads one, searched a 4-way grid when AUC's
+   invariance to positive rescaling makes one weight redundant, and printed nothing until
+   the end so a slow run was indistinguishable from a hang. The corrected
+   `scripts/tune_fusion.py` runs the same search in ~2 min.
+2. **Three runtime estimates in a row were wrong** (embedding ~80 min → 43; EB-NeRD
+   submission ~35 min → 6.7; fusion ~42 min → >60 and killed). An estimate for a loop
+   nobody has timed is a guess and should be labelled as one.
+3. **`pgrep -f <pattern>` matches the shell running the check**, so a dead background job
+   was reported as running. Use `ps`, or wait on a PID.
 
 ### R8 note: the embedding over-run was a false alarm, corrected
 Flagged mid-run as heading for ~80 min against `SCALE_NOTES.md`'s ~43 min estimate. Final

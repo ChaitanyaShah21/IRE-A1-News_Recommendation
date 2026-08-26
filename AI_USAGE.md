@@ -92,3 +92,8 @@ Full session transcripts exported to `reports/ai_transcripts/` before submission
 | `scripts/validate_submission.py` | AI-generated | Pre-flight validator. Exists because a submission cannot be debugged from a leaderboard - it returns one number and no diagnostics |
 | `README.md` | AI-generated, human-decided | Q7 deliverable #1 ("README.md with one-command reproduce"), which the repository was missing entirely until Phase 5. Results tables are copied from measured runs; step timings that were never stopwatch-timed are marked as such rather than estimated |
 | `reports/submissions/*` | Generated output | Not authored; gitignored, reproducible via the scripts above |
+
+| `src/newsrec/eval/rerank_variants.py` | AI-generated | Phase 5b: max-similarity user representation, per-impression normalisation, weighted fusion. Kept separate from `rerank.py` so the four scorers behind every Q4 number stay untouched |
+| `scripts/tune_rerank.py` | AI-generated | The N sweep (D31). Its fusion stage was mis-designed - seven metrics per combination, a redundant 4-way grid, no progress output - and was killed after an hour; superseded by `tune_fusion.py` |
+| `scripts/tune_fusion.py` | AI-generated | The corrected fusion search: AUC only, one weight pinned, popularity dropped on a measured transferability check. ~2 min for the same answer |
+| `scripts/run_submission.py` (`--n-recent`) | AI-generated, human-decided | Chaitanya asked how to improve the leaderboard result, which is what prompted the N re-tune; output filenames now carry N so a retuned run cannot overwrite an earlier submission |
