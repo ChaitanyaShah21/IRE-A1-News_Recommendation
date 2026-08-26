@@ -658,7 +658,10 @@ content-based retrieval as such.
       ~2 pages engineering / ~2 pages findings per Chaitanya's call.
 - [ ] **Chaitanya to do:** upload the EB-NeRD `_n100` zip if not already; screenshot both
       leaderboards into `reports/figures/`.
-- [ ] **Q6 design note (≤4 pages) — NOT STARTED. The only graded deliverable at zero.**
+- [x] **Q6 design note written** (`reports/design_note.md`, committed d13e5e2). The line
+      that stood here said "NOT STARTED — the only graded deliverable at zero" for a day
+      after it was finished. A status file that lags reality is worse than none, because
+      it redirects effort toward work already done.
 
 ### Phase 5b process errors, recorded so they are not repeated
 1. **The first fusion search ran >1 h and was killed.** It evaluated seven metrics per
