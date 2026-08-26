@@ -621,15 +621,44 @@ content-based retrieval as such.
       workflow, layout, headline results, three findings.
       *Measured timings are marked as such; steps never stopwatch-timed say so rather than
       carrying an invented number.*
-- [ ] EB-NeRD test embeddings — **running** (~9 min left at time of writing).
-- [ ] EB-NeRD submission generation + validation (~35 min projected).
+- [x] **EB-NeRD test embeddings**: 125,541 vectors, 18.6 min at 113 articles/s.
+- [x] **EB-NeRD submission generated and validated.** 13,536,710 lines, **6.7 min** at
+      42,683 impressions/s, 703 MB text / 230 MB zip. Validator: **0 syntax errors, 0
+      wrong or out-of-order ids, 0 malformed permutations.**
+      The zip is **230,125,490 bytes against the official example's 230,142,211** — the
+      two agree to 0.007%, which is about as strong an external format check as exists.
+- [x] **Both zips verified as artifacts**, not just as pipelines: correct entry name
+      (`prediction.txt` / `predictions.txt`), archive integrity OK, and line counts read
+      back out of the compressed files (2,370,727 / 13,536,710).
+- [x] **240 tests still passing** after the Phase 5 additions.
 - [ ] **Chaitanya to do:** upload both zips, screenshot both leaderboards.
 
-### R8 note on the embedding over-run
-Projected ~43 min in `SCALE_NOTES.md`, actually ~50 min across both corpora. Cause is
-CPU contention, not a bad estimate: throughput was ~50 articles/s while development work
-ran on the same cores and ~115 articles/s when it did not. Unattended wall-clock, so it
-cost schedule rather than attention.
+### R8 note: the embedding over-run was a false alarm, corrected
+Flagged mid-run as heading for ~80 min against `SCALE_NOTES.md`'s ~43 min estimate. Final
+figures: MIND 24.4 min + EB-NeRD 18.6 min = **43.0 min, exactly the estimate.** The
+pessimistic projection came from measuring throughput (~50 articles/s) while development
+work competed for the same cores; unloaded it ran at 113–115 articles/s. The estimate was
+right and the flag was premature — recorded because an over-run flag raised on a
+contended measurement is itself a measurement error.
+
+**The EB-NeRD submission was also 5x faster than projected** — 6.7 min against ~35 min
+guessed from MIND's rate. MIND runs at 7,140 impressions/s and EB-NeRD at 42,683, because
+EB-NeRD's racks are far shorter (median 9 vs 25) and its scoring matrix is 10,451 columns
+rather than 30,043. Extrapolating one dataset's throughput to the other was the error.
+
+### Two process errors in Phase 5 worth not repeating
+1. **`until [ -f file ]` is not "the file is finished".** A watcher fired the instant the
+   zip was *created*, at 17.8 MB mid-write, and validation against that half-written
+   archive raised `BadZipFile`. Worse, it sent us investigating a phantom: the partial
+   file appeared to compress 13x better than the official example, and effort went into
+   explaining a compression anomaly that did not exist. The complete file matches the
+   official example to 0.007%. **Wait on process exit, not file presence.**
+2. **The validator silently skipped a check it was asked to run.** `--reference` pointed
+   at an oracle file the scratchpad had cleaned between sessions, and the code said
+   `if args.reference and args.reference.exists()` — so it printed a clean bill of health
+   having never run the comparison. Now a missing `--reference` is a hard error, raised at
+   argument-parse time rather than after a 13.5M-line pass. A verification step that can
+   silently do nothing is worse than no step, because it reports success either way.
 
 ## Next step
 
