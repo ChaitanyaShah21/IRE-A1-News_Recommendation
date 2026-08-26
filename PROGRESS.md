@@ -699,6 +699,34 @@ rather than 30,043. Extrapolating one dataset's throughput to the other was the 
    argument-parse time rather than after a 13.5M-line pass. A verification step that can
    silently do nothing is worse than no step, because it reports success either way.
 
+### Codabench self-hosted worker: ruled out locally, 2026-08-26
+The EB-NeRD organizers publish a working remote-worker setup (docker + a live
+`BROKER_URL` for competition 2469's shared queue) at
+`github.com/jppol-ai/ebnerd-benchmark/tree/main/codabench`, surfaced by a student on the
+forum. Two independent blockers stop it running on this machine, both found in pre-flight
+rather than during a 4-5 h run:
+
+1. **Architecture.** This machine is `aarch64` (Windows on ARM). The image
+   `codalab/competitions-v2-compute-worker:cpu1.1` ships a *single* manifest whose config
+   blob reads `architecture: amd64` -- no ARM variant exists. qemu emulation would apply
+   to the scoring container too, i.e. numeric Python over 13.5 M rows at 5-20x slowdown.
+2. **Network.** Outbound TCP to `www.codabench.org:5672` (AMQP) times out while :443 is
+   open -- the broker port is filtered by the network/ISP. The worker cannot reach the
+   queue regardless of architecture.
+
+Non-blockers, checked and cleared: WSL2 raised to 12 GB + 16 GB swap via `.wslconfig`
+(was 7.5 GB / 2 GB -- the default is *half of host RAM*, not a ceiling); Docker Engine
+29.7.2 installed and running under systemd; clock in sync to 1 s; 163 GB free on the
+Windows volume.
+
+**Process note:** the architecture check should have come first. It was cheaper than
+every other check run that evening and it was the one that decided the outcome. An
+earlier message had already named amd64-only images as the reason to reject a *cloud* ARM
+tier, without checking the local machine against the same requirement.
+
+Worker files kept at `codabench/` (`.env` gitignored -- live shared-queue credentials)
+in case an x86-64 host becomes available.
+
 ## Next step
 
 **Phase 5 — Q5, scale-up and Codabench submission.** This is the real deadline risk and
