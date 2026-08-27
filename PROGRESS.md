@@ -737,8 +737,8 @@ every other check run that evening and it was the one that decided the outcome. 
 earlier message had already named amd64-only images as the reason to reject a *cloud* ARM
 tier, without checking the local machine against the same requirement.
 
-Worker files kept at `codabench/` (`.env` gitignored -- live shared-queue credentials)
-in case an x86-64 host becomes available.
+Worker tooling was written under `codabench/` and later removed from the repository as
+unrelated to the pipeline; it remains in git history (commits of 2026-08-27).
 
 ### Error: the published Codabench worker silently eats queued submissions, 2026-08-27
 **Symptom.** A self-hosted `codalab/competitions-v2-compute-worker:cpu1.1` (the tag the
@@ -782,8 +782,7 @@ submitted.
 usefully: it receives a real `uuid.UUID` and dies inside `run_wrapper`'s *own* logging call
 (`TypeError: Object of type UUID is not JSON serializable`) -- the line directly beneath
 the `str()` fix in `develop`. That adjacency is the proof no released tag has the fix.
-Adding that single line to the released image (`codabench/Dockerfile.worker-patched`) makes
-it work: submission 904009 (`ebnerd_semantic_n100.zip`) logged **"Submission updated
+Adding that single line to the released image makes it work: submission 904009 (`ebnerd_semantic_n100.zip`) logged **"Submission updated
 successfully!"** and began scoring. The patched worker also drains the shared backlog, so
 running it helps every participant rather than costing them.
 
