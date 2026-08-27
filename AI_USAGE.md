@@ -84,7 +84,24 @@ Chaitanya's `/model` choice) — noted per-commit in git history, not tracked he
 _Appended as files are created._
 
 ## Prompt log
-Full session transcripts exported to `reports/ai_transcripts/` before submission.
+Exported to `reports/ai_transcripts/` — **12 sessions, 155 prompts**, 21–27 August 2026.
+Start at `reports/ai_transcripts/index.md`.
+
+Each file is one Claude Code session, oldest first, containing the prompts as typed.
+Assistant tool activity is summarised between prompts rather than reproduced: the raw
+session logs are ~15 MB of tool inputs and outputs, which is not a prompt log and would
+bury the thing being logged. Regenerate with:
+
+```bash
+python scripts/export_ai_transcripts.py          # prompt log (default)
+python scripts/export_ai_transcripts.py --full   # also include assistant prose
+```
+
+Two things the exporter deliberately excludes, both of which would otherwise misrepresent
+the record: sub-agent (`isSidechain`) conversations, which nobody typed, and harness-
+injected `user` records — slash-command echoes, caveat banners, captured stdout. The
+latter had inflated the count by 9 before they were filtered. Message-queue credentials
+and pre-signed URL signatures appearing in pasted terminal output are masked.
 
 | `src/newsrec/predict.py` | AI-generated | Q5 rank-vector writer and zip packager. The inverse-permutation trap it exists to prevent was found by reading both competitions' published worked examples out of Codabench's API, not by inspection |
 | `tests/test_predict.py` | AI-generated | R10 adversarial suite, 22 tests, pinned against BOTH competitions' own worked examples plus a derived round-trip check so a mis-transcribed example cannot validate a wrong implementation |
@@ -108,4 +125,6 @@ Full session transcripts exported to `reports/ai_transcripts/` before submission
 | `A1.md` | **Supplied with the assignment** | The specification. Not our work; quoted from, never edited |
 | `AI_USAGE.md` | AI-maintained | This file |
 | `.claude/settings.local.json` | AI-generated | Local tool-permission settings; no project logic |
+| `scripts/export_ai_transcripts.py` | AI-generated | Produces this file's prompt log (Q7.4). There is no CLI export flag and the in-session `/export` covers only the current conversation, which would have missed 11 of the 12 sessions |
+| `reports/ai_transcripts/*` | Generated output | Not authored; reproducible via the script above |
 | `codabench/` (removed) | AI-generated | Tooling written on 2026-08-27 to get the EB-NeRD submission scored after the competition's own compute workers were retired. **Removed from the repository** as infrastructure rather than pipeline work; it remains in git history. Recorded here because it was authored during the project even though it is no longer part of it |
