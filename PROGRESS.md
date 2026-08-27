@@ -768,6 +768,15 @@ acknowledges a message before it succeeds is worse than no worker at all. Failur
 destroys the work item looks identical, from the outside, to work that was never
 submitted.
 
+**RESOLVED, 2026-08-27 08:07.** `latest` (v1.22) is broken too, but differently and
+usefully: it receives a real `uuid.UUID` and dies inside `run_wrapper`'s *own* logging call
+(`TypeError: Object of type UUID is not JSON serializable`) -- the line directly beneath
+the `str()` fix in `develop`. That adjacency is the proof no released tag has the fix.
+Adding that single line to the released image (`codabench/Dockerfile.worker-patched`) makes
+it work: submission 904009 (`ebnerd_semantic_n100.zip`) logged **"Submission updated
+successfully!"** and began scoring. The patched worker also drains the shared backlog, so
+running it helps every participant rather than costing them.
+
 **Second-order error:** the container was removed with `docker rm -f`, which deletes its
 logs. Whether our own submission was among the 42 is now unanswerable from the worker
 side. Capture logs to a file *before* tearing down a container you are still reasoning
