@@ -793,10 +793,33 @@ about.
 
 ## Next step
 
-**Phase 5 — Q5, scale-up and Codabench submission.** This is the real deadline risk and
-has been flagged as such since Phase 3. Budget 2.5 h. Cloud platform choice (Kaggle vs
-Colab vs Lightning) is the deferred D2 sub-decision and should be taken against the
-memory numbers now measured, not guessed.
+**Nothing outstanding in the code.** All graded deliverables are complete as of
+2026-08-27:
+
+| Q | Deliverable | State |
+|---|---|---|
+| Q1 | Reproducible pipeline, one-command rebuild | done, `phase-1-complete` |
+| Q2 | BM25 + recall@{50,100,200} | done, `phase-2-complete` |
+| Q3 | Embeddings + recall@K + comparison | done, `phase-3-complete` |
+| Q4 | Harness: AUC/MRR/nDCG, beyond-accuracy, slices, bootstrap CIs | done |
+| Q5 | Both Codabench leaderboards scored + screenshots | **MIND 0.6191 (54/90), EB-NeRD 0.5396 (147/247)** |
+| Q6 | Design note | `reports/design_note.pdf`, **4 pages measured**, within the cap |
+| Q7 | Code, note, screenshots, AI usage log | README + `AI_USAGE.md` current |
+| Q9 | Ablation + no-future-click-leakage test | done, mutation-verified |
+
+240 tests passing.
+
+**Two items that are Chaitanya's, not the code's:**
+1. **Export the session transcripts** to `reports/ai_transcripts/` — `AI_USAGE.md`'s
+   prompt-log section promises them and the directory does not exist yet. Q7.4.
+2. **Submit**: repository to GitHub Classroom, `reports/design_note.pdf` to Moodle.
+
+**The headline result, for the viva.** The offline harness was calibrated against both
+leaderboards and held in two different senses: MIND transferred a *delta* (predicted
++0.0151, delivered +0.0154 — 0.0003 apart) while its absolute levels differed by ~0.030;
+EB-NeRD transferred the *absolute level* (val 0.5413 vs leaderboard 0.5396 — 0.0017 apart)
+on the dataset where the same harness says the honest signal is weakest. That is the claim
+worth defending, not the ranks.
 
 ### ✅ Pacing for Phases 5–6 — settled 2026-08-25
 

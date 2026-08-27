@@ -97,3 +97,15 @@ Full session transcripts exported to `reports/ai_transcripts/` before submission
 | `scripts/tune_rerank.py` | AI-generated | The N sweep (D31). Its fusion stage was mis-designed - seven metrics per combination, a redundant 4-way grid, no progress output - and was killed after an hour; superseded by `tune_fusion.py` |
 | `scripts/tune_fusion.py` | AI-generated | The corrected fusion search: AUC only, one weight pinned, popularity dropped on a measured transferability check. ~2 min for the same answer |
 | `scripts/run_submission.py` (`--n-recent`) | AI-generated, human-decided | Chaitanya asked how to improve the leaderboard result, which is what prompted the N re-tune; output filenames now carry N so a retuned run cannot overwrite an earlier submission |
+
+| `reports/design_note.md`, `reports/design_note.pdf` | AI-generated, human-decided | The Q6 deliverable. Chaitanya chose the balance (~2 pages engineering / ~2 pages findings) and directed what to cut when it ran a page over. Every number in it traces to a measurement in `ARCHITECTURE.md` or `SCALE_NOTES.md`; none were written from memory |
+| `scripts/build_design_note_pdf.py` | AI-generated | Renders the note and **reads the page count out of the PDF's own page tree** rather than estimating from word count. Written because Q6's 4-page cap is a property of the rendered document and was never being checked — the first run found it at 5 pages. Fixed by typography alone, so no content was cut |
+| `reports/figures/mind_csharp.png`, `reports/figures/ebnerd_csharp.png` | **Not authored** — leaderboard screenshots captured by Chaitanya | Q5/Q7 evidence. The EB-NeRD score was obtained by attaching a self-hosted worker to the competition queue per the organizers' documented procedure; the scoring program, hidden reference data and metrics are the organizers' own and unmodified |
+| `scripts/benchmark_engineering.py` | AI-generated | Latency/throughput/footprint measurements after the course email named these as grading criteria. Results in `SCALE_NOTES.md`; every figure in the design note's engineering section comes from here rather than from an estimate |
+| `SCALE_NOTES.md` | AI-maintained | "Where this breaks at 10×" observations, recorded as they occurred rather than reconstructed |
+| `requirements-dev.txt` | AI-generated | Test/lint tooling, kept separate so the reproduce path does not install it |
+| `src/newsrec/__init__.py`, `src/newsrec/{eval,retrieval}/__init__.py` | AI-generated | Package markers, empty |
+| `A1.md` | **Supplied with the assignment** | The specification. Not our work; quoted from, never edited |
+| `AI_USAGE.md` | AI-maintained | This file |
+| `.claude/settings.local.json` | AI-generated | Local tool-permission settings; no project logic |
+| `codabench/` (removed) | AI-generated | Tooling written on 2026-08-27 to get the EB-NeRD submission scored after the competition's own compute workers were retired. **Removed from the repository** as infrastructure rather than pipeline work; it remains in git history. Recorded here because it was authored during the project even though it is no longer part of it |
