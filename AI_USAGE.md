@@ -88,13 +88,16 @@ Exported to `reports/ai_transcripts/` — **12 sessions, 155 prompts**, 21–27 
 Start at `reports/ai_transcripts/index.md`.
 
 Each file is one Claude Code session, oldest first, containing the prompts as typed.
-Assistant tool activity is summarised between prompts rather than reproduced: the raw
-session logs are ~15 MB of tool inputs and outputs, which is not a prompt log and would
-bury the thing being logged. Regenerate with:
+Assistant tool activity is summarised between prompts rather than reproduced, and long
+pasted terminal output inside a prompt is clipped to its head and tail with an explicit
+elision marker. Both choices serve the same end: the raw session logs are ~15 MB of tool
+inputs and outputs, which is not a prompt log and would bury the thing being logged. The
+log is 112 KB. Regenerate with:
 
 ```bash
-python scripts/export_ai_transcripts.py          # prompt log (default)
-python scripts/export_ai_transcripts.py --full   # also include assistant prose
+python scripts/export_ai_transcripts.py                      # prompt log (default)
+python scripts/export_ai_transcripts.py --full               # also include assistant prose
+python scripts/export_ai_transcripts.py --max-prompt-lines 0 # no clipping
 ```
 
 Two things the exporter deliberately excludes, both of which would otherwise misrepresent

@@ -18,6 +18,6 @@ credentials and pre-signed URL signatures are masked.
 | 9 | [09_2026-08-25_96d4183e.md](09_2026-08-25_96d4183e.md) | 2026-08-25 10:46 | 13 | run_bm25_recall.py |
 | 10 | [10_2026-08-25_14d559b0.md](10_2026-08-25_14d559b0.md) | 2026-08-25 15:45 | 12 | build_embeddings.py |
 | 11 | [11_2026-08-25_ca804be2.md](11_2026-08-25_ca804be2.md) | 2026-08-25 21:33 | 16 | A1 |
-| 12 | [12_2026-08-26_83c9a94a.md](12_2026-08-26_83c9a94a.md) | 2026-08-26 18:17 | 43 | EB-NeRD Codabench worker evaluation |
+| 12 | [12_2026-08-26_83c9a94a.md](12_2026-08-26_83c9a94a.md) | 2026-08-26 18:17 | 46 | EB-NeRD Codabench worker evaluation |
 
-**12 sessions, 155 prompts.**
+**12 sessions, 158 prompts.**

@@ -44,6 +44,42 @@ def redact(text: str) -> str:
     return text
 
 
+def clip(text: str, max_lines: int, max_chars: int, max_line_chars: int = 400) -> str:
+    """Shrink a long prompt: cap over-long individual lines, then elide the middle.
+
+    Prompts here include pasted worker logs. What a prompt log must show is what was
+    asked; the paste is context the reader already has from the surrounding documents.
+
+    Line capping comes FIRST and is not optional. A pasted HTTP response body arrives
+    as a single 30 KB line -- `b'...\n<!DOCTYPE html>...'` with escaped newlines, not
+    real ones -- so line-count elision alone does nothing to it, and a character budget
+    applied only to the head lets it through in the tail. Measuring "lines per block"
+    is exactly the metric that hides this, which is how it was missed the first time.
+
+    Head and tail both survive the elision because the actual question sits at one end
+    or the other; a head-only clip would drop "what is my worker doing?" and keep the log.
+    """
+    def cap_line(line: str) -> str:
+        if len(line) <= max_line_chars:
+            return line
+        return f"{line[:max_line_chars].rstrip()} […{len(line) - max_line_chars} chars elided…]"
+
+    lines = [cap_line(ln) for ln in text.splitlines()]
+    capped = "\n".join(lines)
+
+    if len(lines) <= max_lines and len(capped) <= max_chars:
+        return capped
+
+    head, tail = lines[:max(max_lines - 8, 1)], lines[-6:]
+    cut = len(lines) - len(head) - len(tail)
+    out = "\n".join(head)
+    if len(out) > max_chars:
+        out = out[:max_chars].rstrip() + " …"
+    marker = (f"[… {cut} lines elided — pasted output, see the surrounding docs …]"
+              if cut > 0 else "[… pasted output elided …]")
+    return "\n".join([out, "", marker, ""] + tail)
+
+
 def blocks_to_text(content) -> str:
     """Message content is either a plain string or a list of typed blocks."""
     if isinstance(content, str):
@@ -133,6 +169,10 @@ def main() -> int:
                     help="directory of session .jsonl files")
     ap.add_argument("--full", action="store_true",
                     help="also include the assistant's prose replies")
+    ap.add_argument("--max-prompt-lines", type=int, default=25,
+                    help="clip prompts longer than this (0 disables clipping)")
+    ap.add_argument("--max-prompt-chars", type=int, default=1500,
+                    help="character cap applied alongside --max-prompt-lines")
     args = ap.parse_args()
 
     if not args.source.is_dir():
@@ -167,8 +207,11 @@ def main() -> int:
                     lines += [f"> *(assistant: {len(pending)} tool calls — "
                               f"{', '.join(uniq)})*", ""]
                     pending = []
+                body = redact(ev[2].strip())
+                if args.max_prompt_lines:
+                    body = clip(body, args.max_prompt_lines, args.max_prompt_chars)
                 lines += [f"### {fmt(ev[1])} — prompt", "",
-                          "```text", redact(ev[2].strip()), "```", ""]
+                          "```text", body, "```", ""]
             else:
                 pending += ev[3]
                 if args.full and ev[2].strip():
