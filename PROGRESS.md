@@ -730,6 +730,49 @@ tier, without checking the local machine against the same requirement.
 Worker files kept at `codabench/` (`.env` gitignored -- live shared-queue credentials)
 in case an x86-64 host becomes available.
 
+### Error: the published Codabench worker silently eats queued submissions, 2026-08-27
+**Symptom.** A self-hosted `codalab/competitions-v2-compute-worker:cpu1.1` (the tag the
+EB-NeRD organizers' README pins) connected to competition 2469's queue, took 42 jobs in
+about 60 seconds, and failed every one with `SubmissionException('Failure updating
+submission data.')`.
+
+**Misread first, corrected.** The response body is a full HTML page containing a Login
+link and `user: JSON.parse("")`, which reads as an authentication failure. It is not: the
+log line above it says `status = 500` and the page is Codabench's *500 error* template
+("Something went wrong on our end"). The Login link is just the nav bar rendered for a
+non-browser client. **Anchor on the status code, not on what the body looks like.**
+
+**Root cause, confirmed against upstream source rather than inferred.** The worker PATCHes
+`{'secret': {'__type__': 'uuid', '__value__': {'hex': '...'}}}` — Kombu's JSON encoding of
+a `uuid.UUID`, echoed back verbatim. The server cannot parse a dict as a UUID and 500s.
+Current `compute_worker.py` on `develop` fixes it in the task entrypoint:
+
+    @shared_task(name="compute_worker_run")
+    def run_wrapper(run_args):
+        # We need to convert the UUID given by celery into a byte like object ...
+        run_args.update(secret=str(run_args["secret"]))
+
+That `str()` is absent from `cpu1.1`, which was built **2024-08-05**. Four worker releases
+have shipped since (cpu1.2, cpu1.3, cpu1.4, latest/v1.22 in Jan 2026). The organizers'
+README pins a two-year-old image against a server that kept moving.
+
+**Why it is worse than a failed run.** `compute_worker.py` sets no `task_acks_late`, so
+Celery's default applies: a message is acknowledged on *delivery*, not on success. Every
+job the worker takes and fails is **gone from the queue** — the submission stays "Submitted"
+forever and no other worker will ever see it. The `STATUS_FAILED` write 500s too, so
+nothing is recorded anywhere. 42 of other participants' submissions were consumed this way
+in one minute, dated 2026-08-25 and 2026-08-27 (classmates, from the bundle names).
+
+**Generalisable lesson, and the reason this is worth the space:** a worker that
+acknowledges a message before it succeeds is worse than no worker at all. Failure that
+destroys the work item looks identical, from the outside, to work that was never
+submitted.
+
+**Second-order error:** the container was removed with `docker rm -f`, which deletes its
+logs. Whether our own submission was among the 42 is now unanswerable from the worker
+side. Capture logs to a file *before* tearing down a container you are still reasoning
+about.
+
 ## Next step
 
 **Phase 5 — Q5, scale-up and Codabench submission.** This is the real deadline risk and
