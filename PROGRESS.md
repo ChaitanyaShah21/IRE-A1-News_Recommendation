@@ -656,8 +656,18 @@ content-based retrieval as such.
       criterion. Results in `SCALE_NOTES.md`.
 - [x] **Q6 design note written** — `reports/design_note.md`, ~1,950 words, balanced
       ~2 pages engineering / ~2 pages findings per Chaitanya's call.
-- [ ] **Chaitanya to do:** upload the EB-NeRD `_n100` zip if not already; screenshot both
-      leaderboards into `reports/figures/`.
+- [x] **EB-NeRD SCORED, 2026-08-27.** Submission 904082 (`ebnerd_semantic_n100.zip`):
+      **AUC 0.5396, rank 147**, MRR 0.3441, nDCG@5 0.3817, nDCG@10 0.4608.
+      Screenshot in `reports/figures/ebnerd_csharp.png`; both leaderboards now captured.
+      **The calibration claim held twice, and the second test was the harder one.**
+      MIND transferred a *delta* (predicted +0.0151, delivered +0.0154) while its absolute
+      levels differed by ~0.030. EB-NeRD transferred the **absolute level**: val 0.5413 vs
+      leaderboard 0.5396, a gap of **0.0017** — on the dataset where our own harness says
+      the honest signal is weakest.
+      A free consistency check came with it: the leaderboard's other three columns
+      (0.3441 / 0.3817 / 0.4608) sit just above our N=10 val run (MRR 0.3373, nDCG@5
+      0.3730, nDCG@10 0.4532) in the same order and by about the margin N=10 -> N=100
+      should give. That confirms the column ordering without trusting a header.
 - [x] **Q6 design note written** (`reports/design_note.md`, committed d13e5e2). The line
       that stood here said "NOT STARTED — the only graded deliverable at zero" for a day
       after it was finished. A status file that lags reality is worse than none, because
