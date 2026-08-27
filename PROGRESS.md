@@ -657,7 +657,7 @@ content-based retrieval as such.
 - [x] **Q6 design note written** — `reports/design_note.md`, ~1,950 words, balanced
       ~2 pages engineering / ~2 pages findings per Chaitanya's call.
 - [x] **EB-NeRD SCORED, 2026-08-27.** Submission 904082 (`ebnerd_semantic_n100.zip`):
-      **AUC 0.5396, rank 147**, MRR 0.3441, nDCG@5 0.3817, nDCG@10 0.4608.
+      **AUC 0.5396, rank 147 / 247**, MRR 0.3441, nDCG@5 0.3817, nDCG@10 0.4608.
       Screenshot in `reports/figures/ebnerd_csharp.png`; both leaderboards now captured.
       **The calibration claim held twice, and the second test was the harder one.**
       MIND transferred a *delta* (predicted +0.0151, delivered +0.0154) while its absolute
